@@ -98,9 +98,8 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	var tasmotaState = tasmota.NewPrometheusTasmotaStateCollector(prometheusTopicPrefix)
-
-	tasmotaState.RegisterMessageReceiver(broadcaster)
+	var tasmota = tasmota.NewTasmotaCollector(prometheusTopicPrefix)
+	tasmota.InitializeMessageReceiver(broadcaster)
 
 	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
 	prometheusListenAndServer(listenAddress, metricsPath)

@@ -6,29 +6,34 @@ import (
 	"strings"
 	"time"
 
-	broadcast "github.com/dustin/go-broadcast"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
 )
 
 const stateClientId = "tasmota_state"
 
-type TasmotaWifi struct {
+var durationRegex = regexp.MustCompile(`(?P<days>\d+)?T?(?P<hours>\d+)?:(?P<minutes>\d+)?:(?P<seconds>\d+)?`)
+
+type tasmotaWifi struct {
 	Ap      int    `yaml:"AP"`
 	Ssid    string `yaml:"SSId"`
 	Channel int    `yaml:"Channel"`
 	Rssi    int    `yaml:"RSSI"`
 }
 
-type TasmotaState struct {
+type tasmotaState struct {
 	Uptime  time.Duration
 	Vcc     float64
 	Loadavg int
-	Wifi    TasmotaWifi
+	Wifi    tasmotaWifi
 }
 
-var durationRegex = regexp.MustCompile(`(?P<days>\d+)?T?(?P<hours>\d+)?:(?P<minutes>\d+)?:(?P<seconds>\d+)?`)
+type prometheusTasmotaStateCollector struct {
+	upTimeGauge *prometheus.GaugeVec
+	rssiGauge   *prometheus.GaugeVec
+
+	channel chan interface{}
+}
 
 func parseDuration(str string) time.Duration {
 	matches := durationRegex.FindStringSubmatch(str)
@@ -44,12 +49,12 @@ func parseDuration(str string) time.Duration {
 	return time.Duration(int64(days)*24*hour + int64(hours)*hour + int64(minutes)*minute + int64(seconds)*second)
 }
 
-func (state *TasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type alias struct {
 		Uptime  string      `yaml:"Uptime"`
 		Loadavg int         `yaml:"LoadAvg"`
 		Vcc     float64     `yaml:"Vcc"`
-		Wifi    TasmotaWifi `yaml:"Wifi"`
+		Wifi    tasmotaWifi `yaml:"Wifi"`
 	}
 	var tmp alias
 	err := unmarshal(&tmp)
@@ -65,14 +70,7 @@ func (state *TasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
-type PrometheusTasmotaStateCollector struct {
-	upTimeGauge *prometheus.GaugeVec
-	rssiGauge   *prometheus.GaugeVec
-
-	channel chan interface{}
-}
-
-func NewPrometheusTasmotaStateCollector(metricsPrefix string) (collector *PrometheusTasmotaStateCollector) {
+func newPrometheusTasmotaStateCollector(metricsPrefix string) (collector *prometheusTasmotaStateCollector) {
 	upTimeGauge := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metricsPrefix + "_tasmota_state_uptime",
@@ -91,7 +89,7 @@ func NewPrometheusTasmotaStateCollector(metricsPrefix string) (collector *Promet
 	prometheus.MustRegister(upTimeGauge)
 	prometheus.MustRegister(rssiGauge)
 
-	return &PrometheusTasmotaStateCollector{
+	return &prometheusTasmotaStateCollector{
 		upTimeGauge: upTimeGauge,
 		rssiGauge:   rssiGauge,
 		channel:     make(chan interface{}),
@@ -103,14 +101,14 @@ func isTasmotaStateMessage(topic string) bool {
 	return len(split) == 3 && split[2] == "STATE"
 }
 
-func (collector *PrometheusTasmotaStateCollector) collector() {
+func (collector *prometheusTasmotaStateCollector) collector() {
 	for tmp := range collector.channel {
 		message, err := receiveMessage(tmp, "state", isTasmotaStateMessage)
 		if err != nil {
 			continue
 		}
 
-		state := TasmotaState{}
+		state := tasmotaState{}
 		err = yaml.Unmarshal([]byte((message).Payload()), &state)
 		if err != nil {
 			fatal("state", "error while unmarshaling", err)
@@ -127,9 +125,4 @@ func (collector *PrometheusTasmotaStateCollector) collector() {
 			strconv.Itoa(state.Wifi.Ap),
 		).Set(float64(state.Wifi.Rssi))
 	}
-}
-
-func (collector *PrometheusTasmotaStateCollector) RegisterMessageReceiver(input broadcast.Broadcaster) {
-	go collector.collector()
-	input.Register(collector.channel)
 }

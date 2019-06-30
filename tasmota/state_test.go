@@ -41,7 +41,7 @@ var wifiState = []byte("{\"AP\":2,\"SSId\":\"example_ssid2\",\"BSSId\":\"06:05:0
 func Test_unmarshal_loadavg(t *testing.T) {
 	//given
 	expected := 3
-	result := TasmotaState{}
+	result := tasmotaState{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -55,7 +55,7 @@ func Test_unmarshal_loadavg(t *testing.T) {
 func Test_unmarshal_vcc(t *testing.T) {
 	//given
 	expected := 3.48
-	result := TasmotaState{}
+	result := tasmotaState{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -68,8 +68,8 @@ func Test_unmarshal_vcc(t *testing.T) {
 
 func Test_unmarshal_wifi(t *testing.T) {
 	//given
-	expected := TasmotaWifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
-	result := TasmotaState{}
+	expected := tasmotaWifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
+	result := tasmotaState{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -83,7 +83,7 @@ func Test_unmarshal_wifi(t *testing.T) {
 func Test_unmarshal_wifi_ap(t *testing.T) {
 	//given
 	expected := 2
-	result := TasmotaWifi{}
+	result := tasmotaWifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -97,7 +97,7 @@ func Test_unmarshal_wifi_ap(t *testing.T) {
 func Test_unmarshal_wifi_ssid(t *testing.T) {
 	//given
 	expected := "example_ssid2"
-	result := TasmotaWifi{}
+	result := tasmotaWifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -111,7 +111,7 @@ func Test_unmarshal_wifi_ssid(t *testing.T) {
 func Test_unmarshal_wifi_channel(t *testing.T) {
 	//given
 	expected := 2
-	result := TasmotaWifi{}
+	result := tasmotaWifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -125,7 +125,7 @@ func Test_unmarshal_wifi_channel(t *testing.T) {
 func Test_unmarshal_wifi_rssi(t *testing.T) {
 	//given
 	expected := 52
-	result := TasmotaWifi{}
+	result := tasmotaWifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -144,7 +144,7 @@ func Test_isTasmotaStateMessage(t *testing.T) {
 	for i := range input {
 		result := isTasmotaStateMessage(input[i])
 		if result != expected[i] {
-			t.Errorf("isTasmotaStateMessage => For: %q expected: %t, but got %t", input[i], expected[i], result)
+			t.Errorf("istasmotaStateMessage => For: %q expected: %t, but got %t", input[i], expected[i], result)
 		}
 	}
 }
