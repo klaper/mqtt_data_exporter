@@ -63,6 +63,7 @@ var broadcaster = broadcast.NewBroadcaster(100)
 
 func onMessageReceived(client MQTT.Client, message MQTT.Message) {
 	msg := exporterMessage.NewExporterMessage(message)
+	log.Printf("Received message on topic: %s", message.Topic())
 	opsProcessed.WithLabelValues(msg.GetDeviceName()).Inc()
 	broadcaster.Submit(msg)
 }
