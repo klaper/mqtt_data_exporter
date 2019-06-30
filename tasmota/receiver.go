@@ -28,7 +28,7 @@ func receiveMessage(tmp interface{}, module string, topicValidator func(string) 
 	}
 	debug(module, "Message(%d).Topic %q", (message).MessageID(), (message).Topic())
 	if !isTasmotaStateMessage((message).Topic()) {
-		debug("state", "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
+		debug(module, "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
 		message.ProcessMessage(module, exporterMessage.MessageIgnored)
 		return nil, NotExpectedMessage{message: "Skipped due to wrong topic"}
 	}
