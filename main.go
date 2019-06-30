@@ -37,10 +37,18 @@ func prometheusListenAndServer(listenAddress *string, metricsPath *string) {
 	log.Panic(http.ListenAndServe(*listenAddress, nil))
 }
 
-func mqttInit(mqttHost *string, mqttClientId *string) {
-	connOpts := MQTT.NewClientOptions().AddBroker(*mqttHost).SetClientID(*mqttClientId).SetCleanSession(true)
+func mqttInit(mqttHost *string, mqttClientId *string, mqttUser *string, mqttPassword *string) {
+	connOpts := MQTT.
+		NewClientOptions().
+		AddBroker(*mqttHost).
+		SetClientID(*mqttClientId).
+		SetCleanSession(true).
+		SetAutoReconnect(true).
+		SetUsername(*mqttUser).
+		SetPassword(*mqttPassword)
 
 	connOpts.OnConnect = func(c MQTT.Client) {
+		log.Printf("Connected to MQTT")
 		if token := c.Subscribe("tele/#", byte(1), onMessageReceived); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
@@ -48,8 +56,6 @@ func mqttInit(mqttHost *string, mqttClientId *string) {
 	client := MQTT.NewClient(connOpts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
-	} else {
-		log.Printf("Connected to %s", *mqttHost)
 	}
 }
 
@@ -79,6 +85,14 @@ func main() {
 			"mqtt.clientId",
 			"Mqtt clientId",
 		).Default("mqtt_exporter").String()
+		mqttUsername = kingpin.Flag(
+			"mqtt.username",
+			"Mqtt username",
+		).Default("mqtt_exporter").String()
+		mqttPassword = kingpin.Flag(
+			"mqtt.password",
+			"Mqtt password",
+		).Default("mqtt_exporter").String()
 	)
 
 	kingpin.HelpFlag.Short('h')
@@ -88,6 +102,6 @@ func main() {
 
 	tasmotaState.RegisterMessageReceiver(broadcaster)
 
-	mqttInit(mqttHost, mqttClientId)
+	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
 	prometheusListenAndServer(listenAddress, metricsPath)
 }
