@@ -37,8 +37,8 @@ func prometheusListenAndServer(listenAddress *string, metricsPath *string) {
 	log.Panic(http.ListenAndServe(*listenAddress, nil))
 }
 
-func mqttInit(mqttHost *string) {
-	connOpts := MQTT.NewClientOptions().AddBroker(*mqttHost).SetClientID("mqtt_exporter").SetCleanSession(true)
+func mqttInit(mqttHost *string, mqttClientId *string) {
+	connOpts := MQTT.NewClientOptions().AddBroker(*mqttHost).SetClientID(*mqttClientId).SetCleanSession(true)
 
 	connOpts.OnConnect = func(c MQTT.Client) {
 		if token := c.Subscribe("tele/#", byte(1), onMessageReceived); token.Wait() && token.Error() != nil {
@@ -75,6 +75,10 @@ func main() {
 			"mqtt.host",
 			"Mqtt host address and port.",
 		).Default("127.0.0.1:1883").String()
+		mqttClientId = kingpin.Flag(
+			"mqtt.clientId",
+			"Mqtt clientId",
+		).Default("mqtt_exporter").String()
 	)
 
 	kingpin.HelpFlag.Short('h')
@@ -84,6 +88,6 @@ func main() {
 
 	tasmotaState.RegisterMessageReceiver(broadcaster)
 
-	mqttInit(mqttHost)
+	mqttInit(mqttHost, mqttClientId)
 	prometheusListenAndServer(listenAddress, metricsPath)
 }
