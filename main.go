@@ -89,11 +89,11 @@ func main() {
 		mqttUsername = kingpin.Flag(
 			"mqtt.username",
 			"Mqtt username",
-		).Default("mqtt_exporter").String()
+		).Default().String()
 		mqttPassword = kingpin.Flag(
 			"mqtt.password",
 			"Mqtt password",
-		).Default("mqtt_exporter").String()
+		).Default().String()
 	)
 
 	kingpin.HelpFlag.Short('h')
