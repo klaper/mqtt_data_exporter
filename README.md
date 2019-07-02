@@ -12,12 +12,12 @@ Simply it subscribes to MQTT topics and exposes data published there in way that
 ### Accepted parameters
 
 ```
-web.listen-address: 	[Default: ":2112"] 				Address on which to expose metrics and web interface. 
-web.telemetry-path: 	[Default: "/metrics"] 			Path under which to expose metrics.
-mqtt.host:          	[Default: "127.0.0.1:1883"] 	Mqtt host address and port.
-mqtt.clientId:          [Default: "mqtt_exporter"]	 	Mqtt clientId.
-mqtt.username:          [Default: ""]	 				Mqtt username.
-mqtt.password:			[Default: ""]					Mqtt password
+web.listen-address:     [Default: ":2112"]              Address on which to expose metrics and web interface. 
+web.telemetry-path:     [Default: "/metrics"]           Path under which to expose metrics.
+mqtt.host:              [Default: "127.0.0.1:1883"]     Mqtt host address and port.
+mqtt.clientId:          [Default: "mqtt_exporter"]      Mqtt clientId.
+mqtt.username:          [Default: ""]                   Mqtt username.
+mqtt.password:          [Default: ""]                   Mqtt password
 ```
 
 ### Running in docker
