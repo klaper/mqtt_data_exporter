@@ -25,12 +25,14 @@ type tasmotaState struct {
 	Uptime  time.Duration
 	Vcc     float64
 	Loadavg int
+	Power   float64
 	Wifi    tasmotaWifi
 }
 
 type prometheusTasmotaStateCollector struct {
 	upTimeGauge *prometheus.GaugeVec
 	rssiGauge   *prometheus.GaugeVec
+	powerGauge  *prometheus.GaugeVec
 
 	channel chan interface{}
 }
@@ -49,11 +51,19 @@ func parseDuration(str string) time.Duration {
 	return time.Duration(int64(days)*24*hour + int64(hours)*hour + int64(minutes)*minute + int64(seconds)*second)
 }
 
+func parsePower(str string) float64 {
+	if str == "ON" {
+		return 1
+	}
+	return 0
+}
+
 func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type alias struct {
 		Uptime  string      `yaml:"Uptime"`
 		Loadavg int         `yaml:"LoadAvg"`
 		Vcc     float64     `yaml:"Vcc"`
+		Power   string      `yaml:"POWER"`
 		Wifi    tasmotaWifi `yaml:"Wifi"`
 	}
 	var tmp alias
@@ -61,11 +71,13 @@ func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-
+	debug("state", "Got %+v as state input", tmp)
 	state.Uptime = parseDuration(tmp.Uptime)
 	state.Loadavg = tmp.Loadavg
 	state.Wifi = tmp.Wifi
 	state.Vcc = tmp.Vcc
+	state.Power = parsePower(tmp.Power)
+	debug("state", "Got %+v as state output", *state)
 
 	return nil
 }
@@ -85,13 +97,22 @@ func newPrometheusTasmotaStateCollector(metricsPrefix string) (collector *promet
 		},
 		[]string{"tasmota_instance", "ssid", "channel", "ap_index"},
 	)
+	powerGauge := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: metricsPrefix + "_tasmota_power",
+			Help: "Power state of tasmota entity",
+		},
+		[]string{"tasmota_instance"},
+	)
 
 	prometheus.MustRegister(upTimeGauge)
 	prometheus.MustRegister(rssiGauge)
+	prometheus.MustRegister(powerGauge)
 
 	return &prometheusTasmotaStateCollector{
 		upTimeGauge: upTimeGauge,
 		rssiGauge:   rssiGauge,
+		powerGauge:  powerGauge,
 		channel:     make(chan interface{}),
 	}
 }
@@ -117,6 +138,7 @@ func (collector *prometheusTasmotaStateCollector) collector() {
 		device := message.GetDeviceName()
 
 		collector.upTimeGauge.WithLabelValues(device).Set(state.Uptime.Seconds())
+		collector.powerGauge.WithLabelValues(device).Set(state.Power)
 
 		collector.rssiGauge.WithLabelValues(
 			device,

@@ -35,7 +35,25 @@ func Benchmark_parseDuration(b *testing.B) {
 	}
 }
 
-var fullState = []byte("{\"Time\":\"2019-06-25T11:04:34\",\"Uptime\":\"41T12:28:52\",\"Vcc\":3.480,\"SleepMode\":\"Dynamic\",\"Sleep\":250,\"LoadAvg\":3,\"POWER\":\"OFF\",\"Wifi\":{\"AP\":1,\"SSId\":\"example_ssid\",\"BSSId\":\"01:02:03:04:05:06\",\"Channel\":6,\"RSSI\":80}}")
+var powerData = map[string]float64{
+	"ON":    1,
+	"OFF":   0,
+	"OTHER": 0,
+}
+
+func Test_parsePower(t *testing.T) {
+	for input := range powerData {
+		//when
+		result := parsePower(input)
+
+		//then
+		if result != powerData[input] {
+			t.Errorf("\"%s\" != \"%f\" but %f", input, powerData[input], result)
+		}
+	}
+}
+
+var fullState = []byte("{\"Time\":\"2019-06-25T11:04:34\",\"Uptime\":\"41T12:28:52\",\"Vcc\":3.480,\"SleepMode\":\"Dynamic\",\"Sleep\":250,\"LoadAvg\":3,\"POWER\":\"ON\",\"Wifi\":{\"AP\":1,\"SSId\":\"example_ssid\",\"BSSId\":\"01:02:03:04:05:06\",\"Channel\":6,\"RSSI\":80}}")
 var wifiState = []byte("{\"AP\":2,\"SSId\":\"example_ssid2\",\"BSSId\":\"06:05:04:03:02:01\",\"Channel\":2,\"RSSI\":52}")
 
 func Test_unmarshal_loadavg(t *testing.T) {
@@ -49,6 +67,20 @@ func Test_unmarshal_loadavg(t *testing.T) {
 	//then
 	if result.Loadavg != expected {
 		t.Errorf("expected: %q, got: %q", expected, result.Loadavg)
+	}
+}
+
+func Test_unmarshal_power(t *testing.T) {
+	//given
+	expected := 1.00
+	result := tasmotaState{}
+
+	//when
+	yaml.Unmarshal(fullState, &result)
+
+	//then
+	if result.Power != expected {
+		t.Errorf("expected: %f, got: %f", expected, result.Power)
 	}
 }
 
