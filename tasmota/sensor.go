@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	naming "github.com/klaper_/mqtt_data_exporter/naming"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
 )
@@ -30,6 +32,9 @@ const (
 
 type prometheusTasmotaSensorCollector struct {
 	sensors map[string]*prometheus.GaugeVec
+
+	converter *naming.Namer
+
 	channel chan interface{}
 }
 
@@ -130,7 +135,7 @@ func isTasmotaSensorMessage(topic string) bool {
 	return len(split) == 3 && split[2] == "SENSOR"
 }
 
-func newPrometheusTasmotaSensorCollector(metricsPrefix string) (collector *prometheusTasmotaSensorCollector) {
+func newPrometheusTasmotaSensorCollector(metricsPrefix string, namer *naming.Namer) (collector *prometheusTasmotaSensorCollector) {
 	gauges := make(map[string]*prometheus.GaugeVec)
 
 	for sensor := range sensor_types {
@@ -140,7 +145,7 @@ func newPrometheusTasmotaSensorCollector(metricsPrefix string) (collector *prome
 					Name: fmt.Sprintf("%s_tasmota_sensor_%s", metricsPrefix, strings.Replace(strings.ToLower(string(sensor_types[sensor])), ".", "", 1)),
 					Help: fmt.Sprintf("%s tasmota sensor data", sensor_types[sensor]),
 				},
-				[]string{"tasmota_instance", "sensor_name"},
+				[]string{"device", "group", "friendly_name", "sensor_name"},
 			)
 			prometheus.MustRegister(gauges[string(sensor_types[sensor])])
 		}
@@ -151,13 +156,14 @@ func newPrometheusTasmotaSensorCollector(metricsPrefix string) (collector *prome
 			Name: fmt.Sprintf("%s_tasmota_%s", metricsPrefix, "pm"),
 			Help: "PM tasmota entity",
 		},
-		[]string{"tasmota_instance", "sensor_name", "resolution"},
+		[]string{"device", "group", "friendly_name", "sensor_name", "resolution"},
 	)
 	prometheus.MustRegister(gauges["pm"])
 
 	return &prometheusTasmotaSensorCollector{
-		channel: make(chan interface{}),
-		sensors: gauges,
+		channel:   make(chan interface{}),
+		sensors:   gauges,
+		converter: namer,
 	}
 }
 
@@ -182,13 +188,19 @@ func (collector *prometheusTasmotaSensorCollector) collector() {
 }
 
 func (collector *prometheusTasmotaSensorCollector) updateState(sensor tasmotaSensor) {
+	device, ok := collector.converter.TranslateDevice(sensor.DeviceName)
+	if !ok {
+		name := sensor.DeviceName
+		warn("sensor", "Device configuration %s was not found", name)
+		device = &naming.NamerDevice{name, name, name}
+	}
 	for i := range sensor.Sensors {
 		data := sensor.Sensors[i]
 		if !strings.HasPrefix(string(data.Type), "PM") {
 			data := sensor.Sensors[i]
-			collector.sensors[string(data.Type)].WithLabelValues(sensor.DeviceName, data.SensorName).Set(data.Value)
+			collector.sensors[string(data.Type)].WithLabelValues(device.Device, device.Group, device.Name, data.SensorName).Set(data.Value)
 		} else {
-			collector.sensors["pm"].WithLabelValues(sensor.DeviceName, data.SensorName, string(data.Type)).Set(data.Value)
+			collector.sensors["pm"].WithLabelValues(device.Device, device.Group, device.Name, data.SensorName, string(data.Type)).Set(data.Value)
 		}
 	}
 }

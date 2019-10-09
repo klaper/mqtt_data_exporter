@@ -8,6 +8,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
+
+	naming "github.com/klaper_/mqtt_data_exporter/naming"
 )
 
 const stateClientId = "tasmota_state"
@@ -33,6 +35,8 @@ type prometheusTasmotaStateCollector struct {
 	upTimeGauge *prometheus.GaugeVec
 	rssiGauge   *prometheus.GaugeVec
 	powerGauge  *prometheus.GaugeVec
+
+	converter *naming.Namer
 
 	channel chan interface{}
 }
@@ -82,27 +86,27 @@ func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
-func newPrometheusTasmotaStateCollector(metricsPrefix string) (collector *prometheusTasmotaStateCollector) {
+func newPrometheusTasmotaStateCollector(metricsPrefix string, namer *naming.Namer) (collector *prometheusTasmotaStateCollector) {
 	upTimeGauge := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metricsPrefix + "_tasmota_state_uptime",
 			Help: "Uptime of tasmota entity",
 		},
-		[]string{"tasmota_instance"},
+		[]string{"device", "group", "friendly_name"},
 	)
 	rssiGauge := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metricsPrefix + "_tasmota_state_rssi",
 			Help: "Signal strength of tasmota entity",
 		},
-		[]string{"tasmota_instance", "ssid", "channel", "ap_index"},
+		[]string{"device", "group", "friendly_name", "ssid", "channel", "ap_index"},
 	)
 	powerGauge := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metricsPrefix + "_tasmota_power",
 			Help: "Power state of tasmota entity",
 		},
-		[]string{"tasmota_instance"},
+		[]string{"device", "group", "friendly_name"},
 	)
 
 	prometheus.MustRegister(upTimeGauge)
@@ -114,6 +118,7 @@ func newPrometheusTasmotaStateCollector(metricsPrefix string) (collector *promet
 		rssiGauge:   rssiGauge,
 		powerGauge:  powerGauge,
 		channel:     make(chan interface{}),
+		converter:   namer,
 	}
 }
 
@@ -135,13 +140,20 @@ func (collector *prometheusTasmotaStateCollector) collector() {
 			fatal("state", "error while unmarshaling", err)
 			continue
 		}
-		device := message.GetDeviceName()
+		device, ok := collector.converter.TranslateDevice(message.GetDeviceName())
+		if !ok {
+			name := message.GetDeviceName()
+			warn("state", "Device configuration %s was not found", name)
+			device = &naming.NamerDevice{name, name, name}
+		}
 
-		collector.upTimeGauge.WithLabelValues(device).Set(state.Uptime.Seconds())
-		collector.powerGauge.WithLabelValues(device).Set(state.Power)
+		collector.upTimeGauge.WithLabelValues(device.Device, device.Group, device.Name).Set(state.Uptime.Seconds())
+		collector.powerGauge.WithLabelValues(device.Device, device.Group, device.Name).Set(state.Power)
 
 		collector.rssiGauge.WithLabelValues(
-			device,
+			device.Device,
+			device.Group,
+			device.Name,
 			state.Wifi.Ssid,
 			strconv.Itoa(state.Wifi.Channel),
 			strconv.Itoa(state.Wifi.Ap),

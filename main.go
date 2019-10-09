@@ -94,12 +94,16 @@ func main() {
 			"mqtt.password",
 			"Mqtt password",
 		).Default().String()
+		namingFile = kingpin.Flag(
+			"naming.config",
+			"File containg naming convertions",
+		).Default("/etc/mqtt_exporter/naming.yaml").String()
 	)
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	var tasmota = tasmota.NewTasmotaCollector(prometheusTopicPrefix)
+	var tasmota = tasmota.NewTasmotaCollector(prometheusTopicPrefix, *namingFile)
 	tasmota.InitializeMessageReceiver(broadcaster)
 
 	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)

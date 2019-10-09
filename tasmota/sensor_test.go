@@ -4,7 +4,9 @@ import (
 	"testing"
 )
 
-// var fullInputJson = []byte("{\"Time\":\"2019-06-25T21:29:37\",\"Switch1\":\"OFF\",\"ANALOG\":{\"A0\":3},\"BMP280\":{\"Temperature\":30.3,\"Pressure\":1010.7},\"BH1750\":{\"Illuminance\":0},\"PressureUnit\":\"hPa\",\"TempUnit\":\"C\"}")
+/*
+"{\"Time\":\"2019-06-25T21:29:37\",\"Switch1\":\"OFF\",\"ANALOG\":{\"A0\":3},\"BMP280\":{\"Temperature\":30.3,\"Pressure\":1010.7},\"BH1750\":{\"Illuminance\":0},\"PressureUnit\":\"hPa\",\"TempUnit\":\"C\"}"
+*/
 
 func Test_getKeys(t *testing.T) {
 	//given
