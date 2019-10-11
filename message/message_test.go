@@ -47,7 +47,7 @@ func Test_GetDeviceName(t *testing.T) {
 
 	//when
 	for i := range input {
-		message := NewExporterMessage(&mqttMessage{topic: input[i]})
+		message := NewExporterMessage(&mqttMessage{topic: input[i]}, nil)
 		result := message.GetDeviceName()
 		if result != expected[i] {
 			t.Errorf("DeviceName => For: %q expected: %q, but got %q", input[i], expected[i], result)

@@ -4,29 +4,19 @@ import (
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
 	"github.com/klaper_/mqtt_data_exporter/naming"
 	"github.com/klaper_/mqtt_data_exporter/prom"
-	tasmota "github.com/klaper_/mqtt_data_exporter/tasmota"
-	"github.com/prometheus/client_golang/prometheus"
-
+	"github.com/klaper_/mqtt_data_exporter/tasmota"
 	"log"
 	"net/http"
 
-	broadcast "github.com/dustin/go-broadcast"
+	"github.com/dustin/go-broadcast"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	opsProcessed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "mqtt_exporter_total_message_count",
-			Help: "Count of MQTT messages processed",
-		}, []string{"source_instance"})
+	metricsStore *prom.Metrics
 )
-
-func init() {
-	prometheus.MustRegister(opsProcessed)
-}
 
 func prometheusListenAndServer(listenAddress *string, metricsPath *string) {
 	http.Handle(*metricsPath, promhttp.Handler())
@@ -62,9 +52,13 @@ func mqttInit(mqttHost *string, mqttClientId *string, mqttUser *string, mqttPass
 var broadcaster = broadcast.NewBroadcaster(100)
 
 func onMessageReceived(client MQTT.Client, message MQTT.Message) {
-	msg := exporterMessage.NewExporterMessage(message)
+	msg := exporterMessage.NewExporterMessage(message, metricsStore)
 	log.Printf("Received message on topic: %s", message.Topic())
-	opsProcessed.WithLabelValues(msg.GetDeviceName()).Inc()
+	metricsStore.CounterInc(
+		"total_message_count",
+		msg.GetDeviceName(),
+		map[string]string{},
+	)
 	broadcaster.Submit(msg)
 }
 
@@ -107,7 +101,20 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	var metricsStore = prom.NewMetrics(*metricsPrefix, naming.NewNamer(*namingFile))
+	metricsStore = prom.NewMetrics(*metricsPrefix, naming.NewNamer(*namingFile))
+	metricsStore.RegisterCounter(
+		"total_message_count",
+		"total_message_count",
+		"Count of MQTT messages processed",
+		[]string{},
+	)
+	metricsStore.RegisterCounter(
+		"message_count",
+		"message_count",
+		"Count of MQTT messages processed",
+		[]string{"processing_state", "exporter_module"},
+	)
+
 	var tasmotaCollector = tasmota.NewTasmotaCollector(metricsStore)
 	tasmotaCollector.InitializeMessageReceiver(broadcaster)
 

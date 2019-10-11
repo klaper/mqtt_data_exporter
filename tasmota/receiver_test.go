@@ -1,6 +1,7 @@
 package tasmota
 
 import (
+	"github.com/klaper_/mqtt_data_exporter/prom"
 	"testing"
 
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
@@ -54,7 +55,10 @@ func Test_receiveMessageNonMessage(t *testing.T) {
 
 func Test_receiveMessageDifferentTopic(t *testing.T) {
 	//given
-	inputTmp := exporterMessage.NewExporterMessage(messageMock{topic: "some/topic/value"})
+	inputTmp := exporterMessage.NewExporterMessage(
+		messageMock{topic: "some/topic/value"},
+		prom.NewMetrics("", nil),
+	)
 	inputModule := "module"
 
 	//when
@@ -68,7 +72,10 @@ func Test_receiveMessageDifferentTopic(t *testing.T) {
 
 func Test_receiveMessageSameTopic(t *testing.T) {
 	//given
-	inputTmp := exporterMessage.NewExporterMessage(messageMock{topic: "some/topic/value"})
+	inputTmp := exporterMessage.NewExporterMessage(
+		messageMock{topic: "some/topic/value"},
+		prom.NewMetrics("", nil),
+	)
 	inputModule := "module"
 
 	//when

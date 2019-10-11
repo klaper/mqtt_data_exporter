@@ -1,10 +1,10 @@
 package message
 
 import (
+	"github.com/klaper_/mqtt_data_exporter/prom"
 	"strings"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type MessageState string
@@ -14,24 +14,13 @@ const (
 	MessageIgnored   MessageState = "ignored"
 )
 
-const prometheusTopicPrefix = "mqtt_exporter"
-
-var processingGauge = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Name: prometheusTopicPrefix + "_message_count",
-		Help: "Count of MQTT messages processed",
-	}, []string{"source_instance", "processing_state", "exporter_module"})
-
-func init() {
-	prometheus.MustRegister(processingGauge)
-}
-
 type ExporterMessage struct {
-	msg MQTT.Message
+	msg          MQTT.Message
+	metricsStore *prom.Metrics
 }
 
-func NewExporterMessage(msg MQTT.Message) *ExporterMessage {
-	return &ExporterMessage{msg: msg}
+func NewExporterMessage(msg MQTT.Message, metricsStore *prom.Metrics) *ExporterMessage {
+	return &ExporterMessage{msg: msg, metricsStore: metricsStore}
 }
 
 func (e *ExporterMessage) GetDeviceName() string {
@@ -39,7 +28,14 @@ func (e *ExporterMessage) GetDeviceName() string {
 }
 
 func (e *ExporterMessage) ProcessMessage(exporterModule string, state MessageState) {
-	processingGauge.WithLabelValues(e.GetDeviceName(), string(state), exporterModule).Inc()
+	e.metricsStore.CounterInc(
+		"message_count",
+		e.GetDeviceName(),
+		map[string]string{
+			"processing_state": string(state),
+			"exporter_module":  exporterModule,
+		},
+	)
 }
 
 func (e *ExporterMessage) Duplicate() bool {
