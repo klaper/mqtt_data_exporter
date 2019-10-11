@@ -132,8 +132,7 @@ func isTasmotaSensorMessage(topic string) bool {
 func newPrometheusTasmotaSensorCollector(metricsStore *prom.Metrics) (collector *prometheusTasmotaSensorCollector) {
 	for sensor := range sensor_types {
 		if !strings.HasPrefix(string(sensor_types[sensor]), "PM") {
-			metricsStore.RegisterMetric(
-				prom.GAUGE,
+			metricsStore.RegisterGauge(
 				string(sensor_types[sensor]),
 				"tasmota_sensor_"+strings.Replace(strings.ToLower(string(sensor_types[sensor])), ".", "", 1),
 				string(sensor_types[sensor])+"tasmota sensor data",
@@ -141,8 +140,7 @@ func newPrometheusTasmotaSensorCollector(metricsStore *prom.Metrics) (collector 
 			)
 		}
 	}
-	metricsStore.RegisterMetric(
-		prom.GAUGE,
+	metricsStore.RegisterGauge(
 		"pm",
 		"tasmota_sensor_pm",
 		"PM tasmota entity",

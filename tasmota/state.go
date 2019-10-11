@@ -80,22 +80,19 @@ func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 }
 
 func newPrometheusTasmotaStateCollector(metricsStore *prom.Metrics) (collector *prometheusTasmotaStateCollector) {
-	metricsStore.RegisterMetric(
-		prom.GAUGE,
+	metricsStore.RegisterGauge(
 		"upTimeGauge",
 		"tasmota_state_uptime",
 		"Uptime of tasmota entity",
 		[]string{},
 	)
-	metricsStore.RegisterMetric(
-		prom.GAUGE,
+	metricsStore.RegisterGauge(
 		"rssiGauge",
 		"tasmota_state_rssi",
 		"Signal strength of tasmota entity",
 		[]string{"ssid", "channel", "ap_index"},
 	)
-	metricsStore.RegisterMetric(
-		prom.GAUGE,
+	metricsStore.RegisterGauge(
 		"powerGauge",
 		"tasmota_power",
 		"Power state of tasmota entity",

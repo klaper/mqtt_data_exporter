@@ -32,16 +32,6 @@ func NewMetrics(metricsNamePrefix string, namingService NamingService) *Metrics 
 	}
 }
 
-func (metrics *Metrics) RegisterMetric(metricsType MetricType, key string, name string, description string, labelNames []string) bool {
-	switch metricsType {
-	case COUNTER:
-		return metrics.RegisterCounter(key, name, description, labelNames)
-	case GAUGE:
-		return metrics.RegisterGauge(key, name, description, labelNames)
-	}
-	return false
-}
-
 func (metrics *Metrics) prefixName(name string) string {
 	return metrics.metricsNamePrefix + "_" + strings.Trim(name, "_")
 }

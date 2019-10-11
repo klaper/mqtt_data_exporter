@@ -35,8 +35,7 @@ func TestMetrics_RegisterCounter_MetricExists(t *testing.T) {
 	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(
-		COUNTER,
+	ok := metrics.RegisterCounter(
 		firstInputMetricsKey,
 		"TestMetrics_RegisterCounter_MetricExists",
 		inputMetricsDescription,
@@ -55,8 +54,7 @@ func TestMetrics_RegisterCounter_MetricAdded(t *testing.T) {
 	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(
-		COUNTER,
+	ok := metrics.RegisterCounter(
 		secondInputMetricsKey,
 		"TestMetrics_RegisterCounter_MetricAdded",
 		inputMetricsDescription,

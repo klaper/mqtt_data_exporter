@@ -37,8 +37,7 @@ func TestMetrics_RegisterGauge_MetricExists(t *testing.T) {
 	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(
-		GAUGE,
+	ok := metrics.RegisterGauge(
 		firstInputMetricsKey,
 		"TestMetrics_RegisterGauge_MetricExists",
 		inputMetricsDescription,
@@ -57,8 +56,7 @@ func TestMetrics_RegisterGauge_MetricAdded(t *testing.T) {
 	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(
-		GAUGE,
+	ok := metrics.RegisterGauge(
 		secondInputMetricsKey,
 		"TestMetrics_RegisterGauge_MetricAdded",
 		inputMetricsDescription,
