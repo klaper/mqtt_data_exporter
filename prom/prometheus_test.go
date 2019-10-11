@@ -2,11 +2,12 @@ package prom
 
 import (
 	"github.com/klaper_/mqtt_data_exporter/naming"
-	"github.com/prometheus/client_golang/prometheus"
+	"reflect"
 	"testing"
 )
 
 var (
+	inputDeviceName          = "SomeDeviceName"
 	inputMetricsKey          = "SomeMetricKey"
 	inputMetricsName         = "SomeMetricName"
 	inputMetricsDescription  = "SomeMetricDescription"
@@ -14,15 +15,37 @@ var (
 	processLabelsBenchResult []string
 	prefixNameBenchResult    string
 	restrictedLabels         = []string{"device", "group", "friendly_name"}
+	expectedDeviceName       = "deviceName"
+	expectedDeviceGroup      = "deviceGroup"
+	expectedDeviceFName      = "deviceFName"
 )
 
-func TestMetrics_RegisterMetric_Count(t *testing.T) {
+//BenchmarkMetrics_prefixName-8      	 5568180	       189 ns/op
+func BenchmarkMetrics_prefixName(b *testing.B) {
+	metrics := NewMetrics("_prefix_", nil)
+	var r string
+	for i := 0; i < b.N; i++ {
+		r = metrics.prefixName("_n_a_m_e_")
+	}
+	prefixNameBenchResult = r
+}
+
+//BenchmarkMetrics_processLabels-8   	 4051521	       300 ns/op
+func BenchmarkMetrics_processLabels(b *testing.B) {
+	var r []string
+	for i := 0; i < b.N; i++ {
+		r = prepareLabelNames([]string{"name", "device", "friendly", "name"})
+	}
+	processLabelsBenchResult = r
+}
+
+func TestMetrics_RegisterMetric_Counter_Count(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 	initialLen := len(metrics.counters)
 
 	//when
-	metrics.RegisterMetric(inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if len(metrics.counters)-1 != initialLen {
@@ -30,12 +53,12 @@ func TestMetrics_RegisterMetric_Count(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Key(t *testing.T) {
+func TestMetrics_RegisterMetric_Counter_Key(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 
 	//when
-	metrics.RegisterMetric(inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if _, ok := metrics.counters[inputMetricsKey]; !ok {
@@ -43,13 +66,13 @@ func TestMetrics_RegisterMetric_Key(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_MetricExists(t *testing.T) {
+func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
 
 	//then
 	if ok {
@@ -57,13 +80,68 @@ func TestMetrics_RegisterMetric_MetricExists(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_MetricAdded(t *testing.T) {
+func TestMetrics_RegisterMetric_Counter_MetricAdded(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+
+	//then
+	if !ok {
+		t.Errorf("RegisterMetric() = %v, want %v", ok, true)
+	}
+}
+
+func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
+	//given
+	metrics := NewMetrics("", nil)
+	initialLen := len(metrics.gauges)
+
+	//when
+	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+
+	//then
+	if len(metrics.gauges)-1 != initialLen {
+		t.Errorf("New metric should be added [expected: %d, actual: %d]", initialLen+1, len(metrics.gauges))
+	}
+}
+
+func TestMetrics_RegisterMetric_Gauge_Key(t *testing.T) {
+	//given
+	metrics := NewMetrics("", nil)
+
+	//when
+	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+
+	//then
+	if _, ok := metrics.gauges[inputMetricsKey]; !ok {
+		t.Errorf("Element \"%s\" was not found on metrics list", inputMetricsKey)
+	}
+}
+
+func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
+	//given
+	metrics := NewMetrics("", nil)
+	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+
+	//when
+	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+
+	//then
+	if ok {
+		t.Errorf("RegisterMetric() = %v, want %v", ok, false)
+	}
+}
+
+func TestMetrics_RegisterMetric_Gauge_MetricAdded(t *testing.T) {
+	//given
+	metrics := NewMetrics("", nil)
+	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+
+	//when
+	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
 
 	//then
 	if !ok {
@@ -73,8 +151,8 @@ func TestMetrics_RegisterMetric_MetricAdded(t *testing.T) {
 
 func TestMetrics_prefixName(t *testing.T) {
 	type fields struct {
-		counters          map[string]*prometheus.CounterVec
-		namer             *naming.Namer
+		counters          map[string]counterWithMetadata
+		namer             NamingService
 		metricsNamePrefix string
 	}
 	type args struct {
@@ -95,7 +173,7 @@ func TestMetrics_prefixName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
 				counters:          tt.fields.counters,
-				namer:             tt.fields.namer,
+				namingService:     tt.fields.namer,
 				metricsNamePrefix: tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.prefixName(tt.args.name); got != tt.want {
@@ -108,7 +186,7 @@ func TestMetrics_prefixName(t *testing.T) {
 func TestNewMetrics_PrefixTrim(t *testing.T) {
 	type args struct {
 		metricsNamePrefix string
-		namer             *naming.Namer
+		namer             NamingService
 	}
 	tests := []struct {
 		name string
@@ -147,49 +225,148 @@ func Test_processLabels(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := processLabels(tt.args.labelNames); !arrayEqual(got, tt.want) {
-				t.Errorf("processLabels() = %v, want %v", got, tt.want)
+			if got := prepareLabelNames(tt.args.labelNames); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("prepareLabelNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-//BenchmarkMetrics_prefixName-8      	 5568180	       189 ns/op
-func BenchmarkMetrics_prefixName(b *testing.B) {
-	metrics := NewMetrics("_prefix_", nil)
-	var r string
-	for i := 0; i < b.N; i++ {
-		r = metrics.prefixName("_n_a_m_e_")
+func TestMetrics_prepareLabels(t *testing.T) {
+	type fields struct {
+		counters          map[string]counterWithMetadata
+		namer             NamingService
+		metricsNamePrefix string
 	}
-	prefixNameBenchResult = r
+	type args struct {
+		labelNames  []string
+		labelValues map[string]string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []string
+	}{
+		{
+			"empty labelNames",
+			fields{},
+			args{
+				labelNames:  []string{},
+				labelValues: map[string]string{},
+			},
+			[]string{},
+		},
+		{
+			"not empty",
+			fields{},
+			args{
+				labelNames:  []string{"2", "1", "4", "3"},
+				labelValues: map[string]string{"1": "a", "2": "b", "3": "c", "4": "d", "5": "e"},
+			},
+			[]string{"b", "a", "d", "c"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			metrics := &Metrics{
+				counters:          tt.fields.counters,
+				namingService:     tt.fields.namer,
+				metricsNamePrefix: tt.fields.metricsNamePrefix,
+			}
+			if got := metrics.prepareLabelValues(tt.args.labelNames, tt.args.labelValues); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("prepareLabelValues() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
-//BenchmarkMetrics_processLabels-8   	 1651156	       713 ns/op
-func BenchmarkMetrics_processLabels(b *testing.B) {
-	var r []string
-	for i := 0; i < b.N; i++ {
-		r = processLabels([]string{"name", "device", "friendly", "name"})
+func TestMetrics_prepareLabels_missingValue(t *testing.T) {
+	inputLabelNames := []string{"a"}
+	inputLabelValues := map[string]string{}
+	want := []string{""}
+
+	metrics := &Metrics{
+		counters:          nil,
+		namingService:     nil,
+		metricsNamePrefix: "",
 	}
-	processLabelsBenchResult = r
+
+	if got := metrics.prepareLabelValues(inputLabelNames, inputLabelValues); !reflect.DeepEqual(got, want) {
+		t.Errorf("prepareLabelValues() = %v, want %v", got, want)
+	}
 }
 
-func arrayEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
+func TestMetrics_appendRestrictedToValues(t *testing.T) {
+	var namingService NamingService = TestNamingService{}
+	type fields struct {
+		counters          map[string]counterWithMetadata
+		namer             NamingService
+		metricsNamePrefix string
 	}
-	for _, v := range a {
-		if !contains(b, v) {
-			return false
-		}
+	type args struct {
+		deviceName string
+		labels     map[string]string
 	}
-	return true
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   map[string]string
+	}{
+		{
+			"empty values",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+			},
+		},
+		{
+			"empty values",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"new": "way"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"new":           "way",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			metrics := &Metrics{
+				counters:          tt.fields.counters,
+				namingService:     tt.fields.namer,
+				metricsNamePrefix: tt.fields.metricsNamePrefix,
+			}
+			if got := metrics.appendRestrictedToValues(tt.args.deviceName, tt.args.labels); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("appendRestrictedToValues() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
-func contains(a []string, x string) bool {
-	for _, n := range a {
-		if x == n {
-			return true
-		}
+func TestMetrics_appendRestrictedToValues_WrongDevice(t *testing.T) {
+	deviceName := "wrongDeviceName"
+	expected := map[string]string{"device": deviceName, "group": "", "friendly_name": deviceName}
+
+	metrics := &Metrics{namingService: TestNamingService{}}
+	result := make(map[string]string)
+
+	if got := metrics.appendRestrictedToValues(deviceName, result); !reflect.DeepEqual(got, expected) {
+		t.Errorf("appendRestrictedToValues() = %v, want %v", got, expected)
 	}
-	return false
+}
+
+type TestNamingService struct{}
+
+func (t TestNamingService) TranslateDevice(deviceName string) (*naming.NamerDevice, bool) {
+	if deviceName == inputDeviceName {
+		return &naming.NamerDevice{Name: expectedDeviceFName, Device: expectedDeviceName, Group: expectedDeviceGroup}, true
+	}
+	return nil, false
 }
