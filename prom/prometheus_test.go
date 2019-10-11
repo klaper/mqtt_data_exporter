@@ -31,122 +31,12 @@ func BenchmarkMetrics_prefixName(b *testing.B) {
 }
 
 //BenchmarkMetrics_processLabels-8   	 4051521	       300 ns/op
-func BenchmarkMetrics_processLabels(b *testing.B) {
+func BenchmarkMetrics_prepareLabelNames(b *testing.B) {
 	var r []string
 	for i := 0; i < b.N; i++ {
 		r = prepareLabelNames([]string{"name", "device", "friendly", "name"})
 	}
 	processLabelsBenchResult = r
-}
-
-func TestMetrics_RegisterMetric_Counter_Count(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	initialLen := len(metrics.counters)
-
-	//when
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//then
-	if len(metrics.counters)-1 != initialLen {
-		t.Errorf("New metric should be added [expected: %d, actual: %d]", initialLen+1, len(metrics.counters))
-	}
-}
-
-func TestMetrics_RegisterMetric_Counter_Key(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-
-	//when
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//then
-	if _, ok := metrics.counters[inputMetricsKey]; !ok {
-		t.Errorf("Element \"%s\" was not found on metrics list", inputMetricsKey)
-	}
-}
-
-func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//when
-	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
-
-	//then
-	if ok {
-		t.Errorf("RegisterMetric() = %v, want %v", ok, false)
-	}
-}
-
-func TestMetrics_RegisterMetric_Counter_MetricAdded(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//when
-	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
-
-	//then
-	if !ok {
-		t.Errorf("RegisterMetric() = %v, want %v", ok, true)
-	}
-}
-
-func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	initialLen := len(metrics.gauges)
-
-	//when
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//then
-	if len(metrics.gauges)-1 != initialLen {
-		t.Errorf("New metric should be added [expected: %d, actual: %d]", initialLen+1, len(metrics.gauges))
-	}
-}
-
-func TestMetrics_RegisterMetric_Gauge_Key(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-
-	//when
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//then
-	if _, ok := metrics.gauges[inputMetricsKey]; !ok {
-		t.Errorf("Element \"%s\" was not found on metrics list", inputMetricsKey)
-	}
-}
-
-func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//when
-	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
-
-	//then
-	if ok {
-		t.Errorf("RegisterMetric() = %v, want %v", ok, false)
-	}
-}
-
-func TestMetrics_RegisterMetric_Gauge_MetricAdded(t *testing.T) {
-	//given
-	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
-
-	//when
-	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
-
-	//then
-	if !ok {
-		t.Errorf("RegisterMetric() = %v, want %v", ok, true)
-	}
 }
 
 func TestMetrics_prefixName(t *testing.T) {
@@ -205,7 +95,7 @@ func TestNewMetrics_PrefixTrim(t *testing.T) {
 	}
 }
 
-func Test_processLabels(t *testing.T) {
+func Test_prepareLabelValues(t *testing.T) {
 	type args struct {
 		labelNames []string
 	}
@@ -232,7 +122,7 @@ func Test_processLabels(t *testing.T) {
 	}
 }
 
-func TestMetrics_prepareLabels(t *testing.T) {
+func TestMetrics_prepareLabelValues(t *testing.T) {
 	type fields struct {
 		counters          map[string]counterWithMetadata
 		namer             NamingService
@@ -281,7 +171,7 @@ func TestMetrics_prepareLabels(t *testing.T) {
 	}
 }
 
-func TestMetrics_prepareLabels_missingValue(t *testing.T) {
+func TestMetrics_prepareLabelValues_missingValue(t *testing.T) {
 	inputLabelNames := []string{"a"}
 	inputLabelValues := map[string]string{}
 	want := []string{""}
