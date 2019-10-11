@@ -2,7 +2,6 @@ package tasmota
 
 import (
 	broadcast "github.com/dustin/go-broadcast"
-	"github.com/klaper_/mqtt_data_exporter/naming"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 )
 
@@ -11,10 +10,10 @@ type TasmotaCollector struct {
 	sensor *prometheusTasmotaSensorCollector
 }
 
-func NewTasmotaCollector(prometheusTopicPrefix string, metricsStore *prom.Metrics, file string) *TasmotaCollector {
+func NewTasmotaCollector(metricsStore *prom.Metrics) *TasmotaCollector {
 	return &TasmotaCollector{
 		state:  newPrometheusTasmotaStateCollector(metricsStore),
-		sensor: newPrometheusTasmotaSensorCollector(prometheusTopicPrefix, naming.NewNamer(file)),
+		sensor: newPrometheusTasmotaSensorCollector(metricsStore),
 	}
 }
 

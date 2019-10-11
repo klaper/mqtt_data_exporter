@@ -16,8 +16,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const prometheusTopicPrefix = "export"
-
 var (
 	opsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -110,7 +108,7 @@ func main() {
 	kingpin.Parse()
 
 	var metricsStore = prom.NewMetrics(*metricsPrefix, naming.NewNamer(*namingFile))
-	var tasmotaCollector = tasmota.NewTasmotaCollector(prometheusTopicPrefix, metricsStore, *namingFile)
+	var tasmotaCollector = tasmota.NewTasmotaCollector(metricsStore)
 	tasmotaCollector.InitializeMessageReceiver(broadcaster)
 
 	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
