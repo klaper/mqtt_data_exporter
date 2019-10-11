@@ -98,7 +98,7 @@ func main() {
 		).Default("/etc/mqtt_exporter/naming.yaml").String()
 		metricsPrefix = kingpin.Flag(
 			"metrics.prefix",
-			"prefix for metrics names",
+			"Prefix for metrics names",
 		).Default("mqtt_exporter").String()
 		logLevel = kingpin.Flag(
 			"log.level",
