@@ -1,6 +1,8 @@
 package prom
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
 	//given
@@ -8,7 +10,7 @@ func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
 	initialLen := len(metrics.gauges)
 
 	//when
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if len(metrics.gauges)-1 != initialLen {
@@ -21,21 +23,27 @@ func TestMetrics_RegisterMetric_Gauge_Key(t *testing.T) {
 	metrics := NewMetrics("", nil)
 
 	//when
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
-	if _, ok := metrics.gauges[inputMetricsKey]; !ok {
-		t.Errorf("Element \"%s\" was not found on metrics list", inputMetricsKey)
+	if _, ok := metrics.gauges[firstInputMetricsKey]; !ok {
+		t.Errorf("Element \"%s\" was not found on metrics list", firstInputMetricsKey)
 	}
 }
 
 func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(
+		GAUGE,
+		firstInputMetricsKey,
+		"TestMetrics_RegisterMetric_Gauge_MetricExists",
+		inputMetricsDescription,
+		inputLabelNames,
+	)
 
 	//then
 	if ok {
@@ -46,10 +54,16 @@ func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
 func TestMetrics_RegisterMetric_Gauge_MetricAdded(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(GAUGE, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(
+		GAUGE,
+		secondInputMetricsKey,
+		"TestMetrics_RegisterMetric_Gauge_MetricAdded",
+		inputMetricsDescription,
+		inputLabelNames,
+	)
 
 	//then
 	if !ok {

@@ -19,7 +19,7 @@ type NamingService interface {
 type Metrics struct {
 	counters          map[string]counterWithMetadata
 	gauges            map[string]gaugeWithMetadata
-	namingService     NamingService
+	NamingService     NamingService
 	metricsNamePrefix string
 }
 
@@ -27,7 +27,7 @@ func NewMetrics(metricsNamePrefix string, namingService NamingService) *Metrics 
 	return &Metrics{
 		counters:          make(map[string]counterWithMetadata),
 		gauges:            make(map[string]gaugeWithMetadata),
-		namingService:     namingService,
+		NamingService:     namingService,
 		metricsNamePrefix: strings.Trim(metricsNamePrefix, "_"),
 	}
 }
@@ -55,7 +55,7 @@ func (metrics *Metrics) prepareLabelValues(labelNames []string, labelValues map[
 }
 
 func (metrics *Metrics) appendRestrictedToValues(deviceName string, labels map[string]string) map[string]string {
-	deviceInfo, ok := metrics.namingService.TranslateDevice(deviceName)
+	deviceInfo, ok := metrics.NamingService.TranslateDevice(deviceName)
 	result := make(map[string]string)
 	for k, v := range labels {
 		result[k] = v

@@ -8,8 +8,10 @@ import (
 
 var (
 	inputDeviceName          = "SomeDeviceName"
-	inputMetricsKey          = "SomeMetricKey"
-	inputMetricsName         = "SomeMetricName"
+	firstInputMetricsKey     = "SomeMetricKey"
+	secondInputMetricsKey     = "OtherMetricKey"
+	firstInputMetricsName    = "SomeMetricName"
+	secondInputMetricsName   = "OtherMetricName"
 	inputMetricsDescription  = "SomeMetricDescription"
 	inputLabelNames          = []string{"label1", "label2"}
 	processLabelsBenchResult []string
@@ -63,7 +65,7 @@ func TestMetrics_prefixName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
 				counters:          tt.fields.counters,
-				namingService:     tt.fields.namer,
+				NamingService:     tt.fields.namer,
 				metricsNamePrefix: tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.prefixName(tt.args.name); got != tt.want {
@@ -161,7 +163,7 @@ func TestMetrics_prepareLabelValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
 				counters:          tt.fields.counters,
-				namingService:     tt.fields.namer,
+				NamingService:     tt.fields.namer,
 				metricsNamePrefix: tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.prepareLabelValues(tt.args.labelNames, tt.args.labelValues); !reflect.DeepEqual(got, tt.want) {
@@ -178,7 +180,7 @@ func TestMetrics_prepareLabelValues_missingValue(t *testing.T) {
 
 	metrics := &Metrics{
 		counters:          nil,
-		namingService:     nil,
+		NamingService:     nil,
 		metricsNamePrefix: "",
 	}
 
@@ -230,7 +232,7 @@ func TestMetrics_appendRestrictedToValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
 				counters:          tt.fields.counters,
-				namingService:     tt.fields.namer,
+				NamingService:     tt.fields.namer,
 				metricsNamePrefix: tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.appendRestrictedToValues(tt.args.deviceName, tt.args.labels); !reflect.DeepEqual(got, tt.want) {
@@ -244,7 +246,7 @@ func TestMetrics_appendRestrictedToValues_WrongDevice(t *testing.T) {
 	deviceName := "wrongDeviceName"
 	expected := map[string]string{"device": deviceName, "group": "", "friendly_name": deviceName}
 
-	metrics := &Metrics{namingService: TestNamingService{}}
+	metrics := &Metrics{NamingService: TestNamingService{}}
 	result := make(map[string]string)
 
 	if got := metrics.appendRestrictedToValues(deviceName, result); !reflect.DeepEqual(got, expected) {

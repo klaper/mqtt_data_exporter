@@ -1,15 +1,13 @@
 package tasmota
 
 import (
+	"github.com/klaper_/mqtt_data_exporter/prom"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
-
-	naming "github.com/klaper_/mqtt_data_exporter/naming"
 )
 
 const stateClientId = "tasmota_state"
@@ -32,13 +30,8 @@ type tasmotaState struct {
 }
 
 type prometheusTasmotaStateCollector struct {
-	upTimeGauge *prometheus.GaugeVec
-	rssiGauge   *prometheus.GaugeVec
-	powerGauge  *prometheus.GaugeVec
-
-	converter *naming.Namer
-
-	channel chan interface{}
+	metricsStore *prom.Metrics
+	channel      chan interface{}
 }
 
 func parseDuration(str string) time.Duration {
@@ -86,39 +79,31 @@ func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
-func newPrometheusTasmotaStateCollector(metricsPrefix string, namer *naming.Namer) (collector *prometheusTasmotaStateCollector) {
-	upTimeGauge := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: metricsPrefix + "_tasmota_state_uptime",
-			Help: "Uptime of tasmota entity",
-		},
-		[]string{"device", "group", "friendly_name"},
+func newPrometheusTasmotaStateCollector(metricsStore *prom.Metrics) (collector *prometheusTasmotaStateCollector) {
+	metricsStore.RegisterMetric(
+		prom.GAUGE,
+		"upTimeGauge",
+		"tasmota_state_uptime",
+		"Uptime of tasmota entity",
+		[]string{},
 	)
-	rssiGauge := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: metricsPrefix + "_tasmota_state_rssi",
-			Help: "Signal strength of tasmota entity",
-		},
-		[]string{"device", "group", "friendly_name", "ssid", "channel", "ap_index"},
+	metricsStore.RegisterMetric(
+		prom.GAUGE,
+		"rssiGauge",
+		"tasmota_state_rssi",
+		"Signal strength of tasmota entity",
+		[]string{"ssid", "channel", "ap_index"},
 	)
-	powerGauge := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: metricsPrefix + "_tasmota_power",
-			Help: "Power state of tasmota entity",
-		},
-		[]string{"device", "group", "friendly_name"},
+	metricsStore.RegisterMetric(
+		prom.GAUGE,
+		"powerGauge",
+		"tasmota_power",
+		"Power state of tasmota entity",
+		[]string{},
 	)
-
-	prometheus.MustRegister(upTimeGauge)
-	prometheus.MustRegister(rssiGauge)
-	prometheus.MustRegister(powerGauge)
-
 	return &prometheusTasmotaStateCollector{
-		upTimeGauge: upTimeGauge,
-		rssiGauge:   rssiGauge,
-		powerGauge:  powerGauge,
-		channel:     make(chan interface{}),
-		converter:   namer,
+		metricsStore: metricsStore,
+		channel:      make(chan interface{}),
 	}
 }
 
@@ -135,28 +120,23 @@ func (collector *prometheusTasmotaStateCollector) collector() {
 		}
 
 		state := tasmotaState{}
-		err = yaml.Unmarshal([]byte((message).Payload()), &state)
+		err = yaml.Unmarshal((message).Payload(), &state)
 		if err != nil {
 			fatal("state", "error while unmarshaling", err)
 			continue
 		}
-		device, ok := collector.converter.TranslateDevice(message.GetDeviceName())
-		if !ok {
-			name := message.GetDeviceName()
-			warn("state", "Device configuration %s was not found", name)
-			device = &naming.NamerDevice{name, name, name}
-		}
+		collector.metricsStore.Set("upTimeGauge", message.GetDeviceName(), map[string]string{}, state.Uptime.Seconds())
+		collector.metricsStore.Set("powerGauge", message.GetDeviceName(), map[string]string{}, state.Power)
 
-		collector.upTimeGauge.WithLabelValues(device.Device, device.Group, device.Name).Set(state.Uptime.Seconds())
-		collector.powerGauge.WithLabelValues(device.Device, device.Group, device.Name).Set(state.Power)
-
-		collector.rssiGauge.WithLabelValues(
-			device.Device,
-			device.Group,
-			device.Name,
-			state.Wifi.Ssid,
-			strconv.Itoa(state.Wifi.Channel),
-			strconv.Itoa(state.Wifi.Ap),
-		).Set(float64(state.Wifi.Rssi))
+		collector.metricsStore.Set(
+			"rssiGauge",
+			message.GetDeviceName(),
+			map[string]string{
+				"ssid":     state.Wifi.Ssid,
+				"channel":  strconv.Itoa(state.Wifi.Channel),
+				"ap_index": strconv.Itoa(state.Wifi.Ap),
+			},
+			float64(state.Wifi.Rssi),
+		)
 	}
 }

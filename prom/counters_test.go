@@ -8,7 +8,7 @@ func TestMetrics_RegisterMetric_Counter_Count(t *testing.T) {
 	initialLen := len(metrics.counters)
 
 	//when
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if len(metrics.counters)-1 != initialLen {
@@ -21,21 +21,27 @@ func TestMetrics_RegisterMetric_Counter_Key(t *testing.T) {
 	metrics := NewMetrics("", nil)
 
 	//when
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
-	if _, ok := metrics.counters[inputMetricsKey]; !ok {
-		t.Errorf("Element \"%s\" was not found on metrics list", inputMetricsKey)
+	if _, ok := metrics.counters[firstInputMetricsKey]; !ok {
+		t.Errorf("Element \"%s\" was not found on metrics list", firstInputMetricsKey)
 	}
 }
 
 func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(
+		COUNTER,
+		firstInputMetricsKey,
+		"TestMetrics_RegisterMetric_Counter_MetricExists",
+		inputMetricsDescription,
+		inputLabelNames,
+		)
 
 	//then
 	if ok {
@@ -46,10 +52,16 @@ func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
 func TestMetrics_RegisterMetric_Counter_MetricAdded(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, inputMetricsKey, inputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
-	ok := metrics.RegisterMetric(COUNTER, inputMetricsKey+"1", inputMetricsName+"1", inputMetricsDescription+"1", inputLabelNames)
+	ok := metrics.RegisterMetric(
+		COUNTER,
+		secondInputMetricsKey,
+		"TestMetrics_RegisterMetric_Counter_MetricAdded",
+		inputMetricsDescription,
+		inputLabelNames,
+		)
 
 	//then
 	if !ok {

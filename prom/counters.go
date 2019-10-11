@@ -25,7 +25,8 @@ func (metrics *Metrics) prepareCounter(key string, name string, description stri
 			}, labels),
 		labels: labels,
 	}
-	return true
+	err := prometheus.Register(metrics.counters[key].metric)
+	return err == nil
 }
 
 type counterWithMetadata struct {

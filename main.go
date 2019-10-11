@@ -2,14 +2,16 @@ package main
 
 import (
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
+	"github.com/klaper_/mqtt_data_exporter/naming"
+	"github.com/klaper_/mqtt_data_exporter/prom"
 	tasmota "github.com/klaper_/mqtt_data_exporter/tasmota"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"log"
 	"net/http"
 
 	broadcast "github.com/dustin/go-broadcast"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -98,13 +100,18 @@ func main() {
 			"naming.config",
 			"File containg naming convertions",
 		).Default("/etc/mqtt_exporter/naming.yaml").String()
+		metricsPrefix = kingpin.Flag(
+			"metrics.prefix",
+			"prefix for metrics names",
+		).Default("mqtt_exporter").String()
 	)
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	var tasmota = tasmota.NewTasmotaCollector(prometheusTopicPrefix, *namingFile)
-	tasmota.InitializeMessageReceiver(broadcaster)
+	var metricsStore = prom.NewMetrics(*metricsPrefix, naming.NewNamer(*namingFile))
+	var tasmotaCollector = tasmota.NewTasmotaCollector(prometheusTopicPrefix, metricsStore, *namingFile)
+	tasmotaCollector.InitializeMessageReceiver(broadcaster)
 
 	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
 	prometheusListenAndServer(listenAddress, metricsPath)

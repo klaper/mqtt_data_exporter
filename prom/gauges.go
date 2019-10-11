@@ -25,7 +25,8 @@ func (metrics *Metrics) prepareGauge(key string, name string, description string
 			}, labels),
 		labels: labels,
 	}
-	return true
+	err := prometheus.Register(metrics.gauges[key].metric)
+	return err == nil
 }
 
 type gaugeWithMetadata struct {
