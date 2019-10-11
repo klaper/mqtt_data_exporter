@@ -39,7 +39,7 @@ func mqttInit(mqttHost *string, mqttClientId *string, mqttUser *string, mqttPass
 
 	connOpts.OnConnect = func(c MQTT.Client) {
 		log.Printf("Connected to MQTT")
-		if token := c.Subscribe("tele/#", byte(1), onMessageReceived); token.Wait() && token.Error() != nil {
+		if token := c.Subscribe("#", byte(1), onMessageReceived); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
 	}
