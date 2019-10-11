@@ -1,6 +1,7 @@
 package tasmota
 
 import (
+	"github.com/klaper_/mqtt_data_exporter/logger"
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
 )
 
@@ -21,18 +22,18 @@ func (err TopicValidatedToFalse) Error() string {
 
 func receiveMessage(tmp interface{}, module string, topicValidator func(string) bool) (*exporterMessage.ExporterMessage, error) {
 	message, ok := tmp.(*exporterMessage.ExporterMessage)
-	debug(module, "message: %+v, ok: %t", message, ok)
+	logger.Debug(module, "message: %+v, ok: %t", message, ok)
 	if !ok {
-		info(module, "Message was not an ExporterMessage")
+		logger.Info(module, "Message was not an ExporterMessage")
 		return nil, NotExporterMessage{message: "Message was not an ExporterMessage"}
 	}
-	debug(module, "Message(%d).Topic %q", (message).MessageID(), (message).Topic())
+	logger.Debug(module, "Message(%d).Topic %q", (message).MessageID(), (message).Topic())
 	if !topicValidator((message).Topic()) {
-		debug(module, "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
+		logger.Debug(module, "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
 		message.ProcessMessage(module, exporterMessage.Ignored)
 		return nil, TopicValidatedToFalse{message: "Skipped due to wrong topic"}
 	}
 	message.ProcessMessage(module, exporterMessage.Processed)
-	debug(module, "Message(%d) was processed", (message).MessageID())
+	logger.Debug(module, "Message(%d) was processed", (message).MessageID())
 	return message, nil
 }

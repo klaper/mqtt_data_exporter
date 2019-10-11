@@ -1,6 +1,7 @@
 package tasmota
 
 import (
+	"github.com/klaper_/mqtt_data_exporter/logger"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 	"regexp"
 	"strconv"
@@ -68,13 +69,13 @@ func (state *state) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	debug(stateClientId, "Got %+v as state input", tmp)
+	logger.Debug(stateClientId, "Got %+v as state input", tmp)
 	state.Uptime = parseDuration(tmp.Uptime)
 	state.Loadavg = tmp.Loadavg
 	state.Wifi = tmp.Wifi
 	state.Vcc = tmp.Vcc
 	state.Power = parsePower(tmp.Power)
-	debug(stateClientId, "Got %+v as state output", *state)
+	logger.Debug(stateClientId, "Got %+v as state output", *state)
 
 	return nil
 }
@@ -119,7 +120,7 @@ func (collector *stateCollector) collector() {
 		state := state{}
 		err = yaml.Unmarshal((message).Payload(), &state)
 		if err != nil {
-			fatal(stateClientId, "error while unmarshaling", err)
+			logger.Fatal(stateClientId, "error while unmarshaling", err)
 			continue
 		}
 		collector.metricsStore.GaugeSet("upTimeGauge", message.GetDeviceName(), map[string]string{}, state.Uptime.Seconds())

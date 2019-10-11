@@ -2,6 +2,7 @@ package tasmota
 
 import (
 	"errors"
+	"github.com/klaper_/mqtt_data_exporter/logger"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 	"regexp"
 	"strings"
@@ -48,7 +49,7 @@ func (sensor *sensor) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	debug(sensorClientId, "parsed input to: %+v", tmp)
+	logger.Debug(sensorClientId, "parsed input to: %+v", tmp)
 
 	sensor.Sensors = getSensorData(tmp)
 
@@ -77,13 +78,13 @@ func getSingleReadout(sensorName string, sensorType sensorType, input interface{
 
 	data, ok := input.(map[interface{}]interface{})
 	if !ok {
-		warn(sensorClientId, "[sensorType: %s][1] Got wrong type (%T) for sensor data", sensorType, input)
+		logger.Warn(sensorClientId, "[sensorType: %s][1] Got wrong type (%T) for sensor data", sensorType, input)
 		return nil, errors.New("got wrong type for sensor data")
 	}
-	debug(sensorClientId, "[sensorType: %s][2] Got sensor data: %+v", sensorType, data)
+	logger.Debug(sensorClientId, "[sensorType: %s][2] Got sensor data: %+v", sensorType, data)
 	interfaceValue, ok := data[string(sensorType)]
 	if !ok {
-		warn(sensorClientId, "[sensorType: %s][3] Could not get sensor value, got: %+v", sensorType, interfaceValue)
+		logger.Warn(sensorClientId, "[sensorType: %s][3] Could not get sensor value, got: %+v", sensorType, interfaceValue)
 		return nil, errors.New("got wrong type for sensor data")
 	}
 
@@ -91,18 +92,18 @@ func getSingleReadout(sensorName string, sensorType sensorType, input interface{
 	case float64:
 		value, ok = interfaceValue.(float64)
 		if !ok {
-			warn(sensorClientId, "[sensorType: %s][7][float64] Could not get sensor value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
+			logger.Warn(sensorClientId, "[sensorType: %s][7][float64] Could not get sensor value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
 			return nil, errors.New("got wrong type for sensor data")
 		}
 	case int:
 		intValue, ok := interfaceValue.(int)
 		if !ok {
-			warn(sensorClientId, "[sensorType: %s][8][int] Could not get int value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
+			logger.Warn(sensorClientId, "[sensorType: %s][8][int] Could not get int value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
 			return nil, errors.New("got wrong type for sensor data")
 		}
 		value = float64(intValue)
 	}
-	debug(sensorClientId, "[sensorType: %s][9] Parsed sensor value to: (%T) %+v", sensorType, value, value)
+	logger.Debug(sensorClientId, "[sensorType: %s][9] Parsed sensor value to: (%T) %+v", sensorType, value, value)
 
 	return &sensorData{
 			Type:       sensorType,
@@ -161,11 +162,11 @@ func (collector *sensorCollector) collector() {
 		sensor := sensor{}
 		err = yaml.Unmarshal([]byte((message).Payload()), &sensor)
 		if err != nil {
-			fatal(sensorClientId, "error while unmarshaling", err)
+			logger.Fatal(sensorClientId, "error while unmarshaling", err)
 			return
 		}
 		sensor.DeviceName = message.GetDeviceName()
-		info(sensorClientId, "message: %+v", sensor)
+		logger.Info(sensorClientId, "message: %+v", sensor)
 
 		collector.updateState(sensor)
 	}

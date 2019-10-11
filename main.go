@@ -2,17 +2,21 @@ package main
 
 import (
 	"github.com/klaper_/mqtt_data_exporter/devices"
+	"github.com/klaper_/mqtt_data_exporter/logger"
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 	"github.com/klaper_/mqtt_data_exporter/tasmota"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/dustin/go-broadcast"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
+
+const moduleId = "main"
 
 var (
 	metricsStore *prom.Metrics
@@ -38,7 +42,7 @@ func mqttInit(mqttHost *string, mqttClientId *string, mqttUser *string, mqttPass
 		SetPassword(*mqttPassword)
 
 	connOpts.OnConnect = func(c MQTT.Client) {
-		log.Printf("Connected to MQTT")
+		logger.Debug(moduleId, "Connected to MQTT")
 		if token := c.Subscribe("#", byte(1), onMessageReceived); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
@@ -53,7 +57,7 @@ var broadcaster = broadcast.NewBroadcaster(100)
 
 func onMessageReceived(client MQTT.Client, message MQTT.Message) {
 	msg := exporterMessage.NewExporterMessage(message, metricsStore)
-	log.Printf("Received message on topic: %s", message.Topic())
+	logger.Debug(moduleId, "Received message on topic: %s", message.Topic())
 	metricsStore.CounterInc(
 		"total_message_count",
 		msg.GetDeviceName(),
@@ -96,10 +100,20 @@ func main() {
 			"metrics.prefix",
 			"prefix for metrics names",
 		).Default("mqtt_exporter").String()
+		logLevel = kingpin.Flag(
+			"log.level",
+			"DEBUG = 1; INFO = 2; WARN = 3; ERROR = 4; OFF = 5",
+		).Default("2").String()
 	)
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
+
+	toSet, err := strconv.Atoi(*logLevel)
+	if err != nil {
+		toSet = 2
+	}
+	logger.SetLogLevel(logger.Loglevel(toSet))
 
 	prepareMetricsStore(metricsPrefix, namingFile)
 
