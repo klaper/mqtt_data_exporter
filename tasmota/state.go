@@ -21,7 +21,7 @@ type Wifi struct {
 	Rssi    int    `yaml:"RSSI"`
 }
 
-type State struct {
+type state struct {
 	Uptime  time.Duration
 	Vcc     float64
 	Loadavg int
@@ -55,7 +55,7 @@ func parsePower(str string) float64 {
 	return 0
 }
 
-func (state *State) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (state *state) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type alias struct {
 		Uptime  string  `yaml:"Uptime"`
 		Loadavg int     `yaml:"LoadAvg"`
@@ -68,13 +68,13 @@ func (state *State) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	debug("state", "Got %+v as state input", tmp)
+	debug(stateClientId, "Got %+v as state input", tmp)
 	state.Uptime = parseDuration(tmp.Uptime)
 	state.Loadavg = tmp.Loadavg
 	state.Wifi = tmp.Wifi
 	state.Vcc = tmp.Vcc
 	state.Power = parsePower(tmp.Power)
-	debug("state", "Got %+v as state output", *state)
+	debug(stateClientId, "Got %+v as state output", *state)
 
 	return nil
 }
@@ -111,15 +111,15 @@ func isStateMessage(topic string) bool {
 
 func (collector *stateCollector) collector() {
 	for tmp := range collector.channel {
-		message, err := receiveMessage(tmp, "state", isStateMessage)
+		message, err := receiveMessage(tmp, stateClientId, isStateMessage)
 		if err != nil {
 			continue
 		}
 
-		state := State{}
+		state := state{}
 		err = yaml.Unmarshal((message).Payload(), &state)
 		if err != nil {
-			fatal("state", "error while unmarshaling", err)
+			fatal(stateClientId, "error while unmarshaling", err)
 			continue
 		}
 		collector.metricsStore.GaugeSet("upTimeGauge", message.GetDeviceName(), map[string]string{}, state.Uptime.Seconds())

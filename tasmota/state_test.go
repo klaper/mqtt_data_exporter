@@ -59,7 +59,7 @@ var wifiState = []byte("{\"AP\":2,\"SSId\":\"example_ssid2\",\"BSSId\":\"06:05:0
 func Test_unmarshal_loadavg(t *testing.T) {
 	//given
 	expected := 3
-	result := State{}
+	result := state{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -73,7 +73,7 @@ func Test_unmarshal_loadavg(t *testing.T) {
 func Test_unmarshal_power(t *testing.T) {
 	//given
 	expected := 1.00
-	result := State{}
+	result := state{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -87,7 +87,7 @@ func Test_unmarshal_power(t *testing.T) {
 func Test_unmarshal_vcc(t *testing.T) {
 	//given
 	expected := 3.48
-	result := State{}
+	result := state{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -101,7 +101,7 @@ func Test_unmarshal_vcc(t *testing.T) {
 func Test_unmarshal_wifi(t *testing.T) {
 	//given
 	expected := Wifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
-	result := State{}
+	result := state{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)

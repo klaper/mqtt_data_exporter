@@ -1,8 +1,8 @@
 package main
 
 import (
-	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
 	"github.com/klaper_/mqtt_data_exporter/devices"
+	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 	"github.com/klaper_/mqtt_data_exporter/tasmota"
 	"log"

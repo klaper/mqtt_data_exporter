@@ -5,7 +5,7 @@ import (
 )
 
 /*
-"{\"Time\":\"2019-06-25T21:29:37\",\"Switch1\":\"OFF\",\"ANALOG\":{\"A0\":3},\"BMP280\":{\"Temperature\":30.3,\"Pressure\":1010.7},\"BH1750\":{\"Illuminance\":0},\"PressureUnit\":\"hPa\",\"TempUnit\":\"C\"}"
+"{\"Time\":\"2019-06-25T21:29:37\",\"Switch1\":\"OFF\",\"ANALOG\":{\"A0\":3},\"BMP280\":{\"temperature\":30.3,\"pressure\":1010.7},\"BH1750\":{\"illuminance\":0},\"PressureUnit\":\"hPa\",\"TempUnit\":\"C\"}"
 */
 
 func Test_getKeys(t *testing.T) {
@@ -61,8 +61,8 @@ func Test_getSensorData(t *testing.T) {
 		t.Errorf("Size => Expected: %d, got: %d", 1, len(result))
 	}
 
-	if result[0].Type != Temperature {
-		t.Errorf("Type => Expected: %+v, got: %+v", Temperature, result[0].Type)
+	if result[0].Type != temperature {
+		t.Errorf("Type => Expected: %+v, got: %+v", temperature, result[0].Type)
 	}
 
 	if result[0].Value != 123.23 {
@@ -108,16 +108,16 @@ func Test_getSensorData_withTwoSensors(t *testing.T) {
 		return
 	}
 
-	if result[0].Type != Temperature {
-		t.Errorf("Type => Expected: %+v, got: %+v", Temperature, result[0].Type)
+	if result[0].Type != temperature {
+		t.Errorf("Type => Expected: %+v, got: %+v", temperature, result[0].Type)
 	}
 
 	if result[0].Value != 124.23 {
 		t.Errorf("Value => Expected: %f, got: %+v", 124.23, result[0].Value)
 	}
 
-	if result[1].Type != Pressure {
-		t.Errorf("Type => Expected: %+v, got: %+v", Pressure, result[1].Type)
+	if result[1].Type != pressure {
+		t.Errorf("Type => Expected: %+v, got: %+v", pressure, result[1].Type)
 	}
 
 	if result[1].Value != 1024 {

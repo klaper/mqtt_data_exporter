@@ -12,18 +12,18 @@ import (
 const sensorClientId = "tasmota_sensor"
 
 var sensorNames = []string{"SI7021", "SDS0X1", "BH1750", "BMP280"}
-var sensorTypes = []SensorType{Temperature, Pressure, Humidity, PM10, PM2, Illuminance}
+var sensorTypes = []sensorType{temperature, pressure, humidity, pm10, pm2, illuminance}
 var unitFields = regexp.MustCompile("Unit$")
 
-type SensorType string
+type sensorType string
 
 const (
-	Temperature SensorType = "Temperature"
-	Pressure    SensorType = "Pressure"
-	Humidity    SensorType = "Humidity"
-	PM10        SensorType = "PM10"
-	PM2         SensorType = "PM2.5"
-	Illuminance SensorType = "Illuminance"
+	temperature sensorType = "Temperature"
+	pressure    sensorType = "Pressure"
+	humidity    sensorType = "Humidity"
+	pm10        sensorType = "PM10"
+	pm2         sensorType = "PM2.5"
+	illuminance sensorType = "Illuminance"
 )
 
 type sensorCollector struct {
@@ -32,7 +32,7 @@ type sensorCollector struct {
 }
 
 type sensorData struct {
-	Type       SensorType
+	Type       sensorType
 	SensorName string
 	Value      float64
 }
@@ -48,7 +48,7 @@ func (sensor *sensor) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	debug("sensor", "parsed input to: %+v", tmp)
+	debug(sensorClientId, "parsed input to: %+v", tmp)
 
 	sensor.Sensors = getSensorData(tmp)
 
@@ -71,19 +71,19 @@ func getSensorData(data map[string]interface{}) (sensors []sensorData) {
 	return
 }
 
-func getSingleReadout(sensorName string, sensorType SensorType, input interface{}) (*sensorData, error) {
+func getSingleReadout(sensorName string, sensorType sensorType, input interface{}) (*sensorData, error) {
 	var value float64
 	var ok bool
 
 	data, ok := input.(map[interface{}]interface{})
 	if !ok {
-		warn("sensor", "[sensorType: %s][1] Got wrong type (%T) for sensor data", sensorType, input)
+		warn(sensorClientId, "[sensorType: %s][1] Got wrong type (%T) for sensor data", sensorType, input)
 		return nil, errors.New("got wrong type for sensor data")
 	}
-	debug("sensor", "[sensorType: %s][2] Got sensor data: %+v", sensorType, data)
+	debug(sensorClientId, "[sensorType: %s][2] Got sensor data: %+v", sensorType, data)
 	interfaceValue, ok := data[string(sensorType)]
 	if !ok {
-		warn("sensor", "[sensorType: %s][3] Could not get sensor value, got: %+v", sensorType, interfaceValue)
+		warn(sensorClientId, "[sensorType: %s][3] Could not get sensor value, got: %+v", sensorType, interfaceValue)
 		return nil, errors.New("got wrong type for sensor data")
 	}
 
@@ -91,18 +91,18 @@ func getSingleReadout(sensorName string, sensorType SensorType, input interface{
 	case float64:
 		value, ok = interfaceValue.(float64)
 		if !ok {
-			warn("sensor", "[sensorType: %s][7][float64] Could not get sensor value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
+			warn(sensorClientId, "[sensorType: %s][7][float64] Could not get sensor value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
 			return nil, errors.New("got wrong type for sensor data")
 		}
 	case int:
 		intValue, ok := interfaceValue.(int)
 		if !ok {
-			warn("sensor", "[sensorType: %s][8][int] Could not get int value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
+			warn(sensorClientId, "[sensorType: %s][8][int] Could not get int value, got: %+v (%T)", sensorType, interfaceValue, interfaceValue)
 			return nil, errors.New("got wrong type for sensor data")
 		}
 		value = float64(intValue)
 	}
-	debug("sensor", "[sensorType: %s][9] Parsed sensor value to: (%T) %+v", sensorType, value, value)
+	debug(sensorClientId, "[sensorType: %s][9] Parsed sensor value to: (%T) %+v", sensorType, value, value)
 
 	return &sensorData{
 			Type:       sensorType,
@@ -153,7 +153,7 @@ func newSensorCollector(metricsStore *prom.Metrics) (collector *sensorCollector)
 
 func (collector *sensorCollector) collector() {
 	for tmp := range collector.channel {
-		message, err := receiveMessage(tmp, "sensor", isSensorMessage)
+		message, err := receiveMessage(tmp, sensorClientId, isSensorMessage)
 		if err != nil {
 			continue
 		}
@@ -161,11 +161,11 @@ func (collector *sensorCollector) collector() {
 		sensor := sensor{}
 		err = yaml.Unmarshal([]byte((message).Payload()), &sensor)
 		if err != nil {
-			fatal("sensor", "error while unmarshaling", err)
+			fatal(sensorClientId, "error while unmarshaling", err)
 			return
 		}
 		sensor.DeviceName = message.GetDeviceName()
-		info("sensor", "message: %+v", sensor)
+		info(sensorClientId, "message: %+v", sensor)
 
 		collector.updateState(sensor)
 	}
