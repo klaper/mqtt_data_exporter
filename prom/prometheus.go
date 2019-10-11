@@ -1,27 +1,27 @@
 package prom
 
 import (
-	"github.com/klaper_/mqtt_data_exporter/naming"
+	"github.com/klaper_/mqtt_data_exporter/devices"
 	"strings"
 )
 
-type NamingService interface {
-	TranslateDevice(deviceName string) (*naming.NamerDevice, bool)
+type DevicePropertiesProvider interface {
+	GetProperties(deviceName string) (*devices.Properties, bool)
 }
 
 type Metrics struct {
-	counters          map[string]counterWithMetadata
-	gauges            map[string]gaugeWithMetadata
-	NamingService     NamingService
-	metricsNamePrefix string
+	counters           map[string]counterWithMetadata
+	gauges             map[string]gaugeWithMetadata
+	propertiesProvider DevicePropertiesProvider
+	metricsNamePrefix  string
 }
 
-func NewMetrics(metricsNamePrefix string, namingService NamingService) *Metrics {
+func NewMetrics(metricsNamePrefix string, propertiesProvider DevicePropertiesProvider) *Metrics {
 	return &Metrics{
-		counters:          make(map[string]counterWithMetadata),
-		gauges:            make(map[string]gaugeWithMetadata),
-		NamingService:     namingService,
-		metricsNamePrefix: strings.Trim(metricsNamePrefix, "_"),
+		counters:           make(map[string]counterWithMetadata),
+		gauges:             make(map[string]gaugeWithMetadata),
+		propertiesProvider: propertiesProvider,
+		metricsNamePrefix:  strings.Trim(metricsNamePrefix, "_"),
 	}
 }
 
@@ -38,13 +38,13 @@ func (metrics *Metrics) prepareLabelValues(labelNames []string, labelValues map[
 }
 
 func (metrics *Metrics) appendRestrictedToValues(deviceName string, labels map[string]string) map[string]string {
-	deviceInfo, ok := metrics.NamingService.TranslateDevice(deviceName)
+	deviceInfo, ok := metrics.propertiesProvider.GetProperties(deviceName)
 	result := make(map[string]string)
 	for k, v := range labels {
 		result[k] = v
 	}
 	if !ok {
-		deviceInfo = &naming.NamerDevice{Name: deviceName, Group: "", Device: deviceName}
+		deviceInfo = &devices.Properties{Name: deviceName, Group: "", Device: deviceName}
 	}
 	result["device"] = deviceInfo.Device
 	result["group"] = deviceInfo.Group

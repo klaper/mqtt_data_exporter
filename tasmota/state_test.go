@@ -59,7 +59,7 @@ var wifiState = []byte("{\"AP\":2,\"SSId\":\"example_ssid2\",\"BSSId\":\"06:05:0
 func Test_unmarshal_loadavg(t *testing.T) {
 	//given
 	expected := 3
-	result := tasmotaState{}
+	result := State{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -73,7 +73,7 @@ func Test_unmarshal_loadavg(t *testing.T) {
 func Test_unmarshal_power(t *testing.T) {
 	//given
 	expected := 1.00
-	result := tasmotaState{}
+	result := State{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -87,7 +87,7 @@ func Test_unmarshal_power(t *testing.T) {
 func Test_unmarshal_vcc(t *testing.T) {
 	//given
 	expected := 3.48
-	result := tasmotaState{}
+	result := State{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -100,8 +100,8 @@ func Test_unmarshal_vcc(t *testing.T) {
 
 func Test_unmarshal_wifi(t *testing.T) {
 	//given
-	expected := tasmotaWifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
-	result := tasmotaState{}
+	expected := Wifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
+	result := State{}
 
 	//when
 	yaml.Unmarshal(fullState, &result)
@@ -115,7 +115,7 @@ func Test_unmarshal_wifi(t *testing.T) {
 func Test_unmarshal_wifi_ap(t *testing.T) {
 	//given
 	expected := 2
-	result := tasmotaWifi{}
+	result := Wifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -129,7 +129,7 @@ func Test_unmarshal_wifi_ap(t *testing.T) {
 func Test_unmarshal_wifi_ssid(t *testing.T) {
 	//given
 	expected := "example_ssid2"
-	result := tasmotaWifi{}
+	result := Wifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -143,7 +143,7 @@ func Test_unmarshal_wifi_ssid(t *testing.T) {
 func Test_unmarshal_wifi_channel(t *testing.T) {
 	//given
 	expected := 2
-	result := tasmotaWifi{}
+	result := Wifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -157,7 +157,7 @@ func Test_unmarshal_wifi_channel(t *testing.T) {
 func Test_unmarshal_wifi_rssi(t *testing.T) {
 	//given
 	expected := 52
-	result := tasmotaWifi{}
+	result := Wifi{}
 
 	//when
 	yaml.Unmarshal(wifiState, &result)
@@ -174,7 +174,7 @@ func Test_isTasmotaStateMessage(t *testing.T) {
 
 	//when
 	for i := range input {
-		result := isTasmotaStateMessage(input[i])
+		result := isStateMessage(input[i])
 		if result != expected[i] {
 			t.Errorf("istasmotaStateMessage => For: %q expected: %t, but got %t", input[i], expected[i], result)
 		}

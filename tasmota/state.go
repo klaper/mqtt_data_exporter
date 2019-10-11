@@ -14,22 +14,22 @@ const stateClientId = "tasmota_state"
 
 var durationRegex = regexp.MustCompile(`(?P<days>\d+)?T?(?P<hours>\d+)?:(?P<minutes>\d+)?:(?P<seconds>\d+)?`)
 
-type tasmotaWifi struct {
+type Wifi struct {
 	Ap      int    `yaml:"AP"`
 	Ssid    string `yaml:"SSId"`
 	Channel int    `yaml:"Channel"`
 	Rssi    int    `yaml:"RSSI"`
 }
 
-type tasmotaState struct {
+type State struct {
 	Uptime  time.Duration
 	Vcc     float64
 	Loadavg int
 	Power   float64
-	Wifi    tasmotaWifi
+	Wifi    Wifi
 }
 
-type prometheusTasmotaStateCollector struct {
+type stateCollector struct {
 	metricsStore *prom.Metrics
 	channel      chan interface{}
 }
@@ -55,13 +55,13 @@ func parsePower(str string) float64 {
 	return 0
 }
 
-func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (state *State) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type alias struct {
-		Uptime  string      `yaml:"Uptime"`
-		Loadavg int         `yaml:"LoadAvg"`
-		Vcc     float64     `yaml:"Vcc"`
-		Power   string      `yaml:"POWER"`
-		Wifi    tasmotaWifi `yaml:"Wifi"`
+		Uptime  string  `yaml:"Uptime"`
+		Loadavg int     `yaml:"LoadAvg"`
+		Vcc     float64 `yaml:"Vcc"`
+		Power   string  `yaml:"POWER"`
+		Wifi    Wifi    `yaml:"Wifi"`
 	}
 	var tmp alias
 	err := unmarshal(&tmp)
@@ -79,7 +79,7 @@ func (state *tasmotaState) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
-func newPrometheusTasmotaStateCollector(metricsStore *prom.Metrics) (collector *prometheusTasmotaStateCollector) {
+func newStateCollector(metricsStore *prom.Metrics) (collector *stateCollector) {
 	metricsStore.RegisterGauge(
 		"upTimeGauge",
 		"tasmota_state_uptime",
@@ -98,25 +98,25 @@ func newPrometheusTasmotaStateCollector(metricsStore *prom.Metrics) (collector *
 		"Power state of tasmota entity",
 		[]string{},
 	)
-	return &prometheusTasmotaStateCollector{
+	return &stateCollector{
 		metricsStore: metricsStore,
 		channel:      make(chan interface{}),
 	}
 }
 
-func isTasmotaStateMessage(topic string) bool {
+func isStateMessage(topic string) bool {
 	split := strings.Split(topic, "/")
 	return len(split) == 3 && split[2] == "STATE"
 }
 
-func (collector *prometheusTasmotaStateCollector) collector() {
+func (collector *stateCollector) collector() {
 	for tmp := range collector.channel {
-		message, err := receiveMessage(tmp, "state", isTasmotaStateMessage)
+		message, err := receiveMessage(tmp, "state", isStateMessage)
 		if err != nil {
 			continue
 		}
 
-		state := tasmotaState{}
+		state := State{}
 		err = yaml.Unmarshal((message).Payload(), &state)
 		if err != nil {
 			fatal("state", "error while unmarshaling", err)

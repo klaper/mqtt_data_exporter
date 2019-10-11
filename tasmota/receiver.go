@@ -29,10 +29,10 @@ func receiveMessage(tmp interface{}, module string, topicValidator func(string) 
 	debug(module, "Message(%d).Topic %q", (message).MessageID(), (message).Topic())
 	if !topicValidator((message).Topic()) {
 		debug(module, "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
-		message.ProcessMessage(module, exporterMessage.MessageIgnored)
+		message.ProcessMessage(module, exporterMessage.Ignored)
 		return nil, TopicValidatedToFalse{message: "Skipped due to wrong topic"}
 	}
-	message.ProcessMessage(module, exporterMessage.MessageProcessed)
+	message.ProcessMessage(module, exporterMessage.Processed)
 	debug(module, "Message(%d) was processed", (message).MessageID())
 	return message, nil
 }

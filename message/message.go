@@ -7,11 +7,11 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MessageState string
+type State string
 
 const (
-	MessageProcessed MessageState = "processed"
-	MessageIgnored   MessageState = "ignored"
+	Processed State = "processed"
+	Ignored   State = "ignored"
 )
 
 type ExporterMessage struct {
@@ -27,7 +27,7 @@ func (e *ExporterMessage) GetDeviceName() string {
 	return strings.Split(e.msg.Topic(), "/")[1]
 }
 
-func (e *ExporterMessage) ProcessMessage(exporterModule string, state MessageState) {
+func (e *ExporterMessage) ProcessMessage(exporterModule string, state State) {
 	e.metricsStore.CounterInc(
 		"message_count",
 		e.GetDeviceName(),

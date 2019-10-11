@@ -5,19 +5,19 @@ import (
 	"github.com/klaper_/mqtt_data_exporter/prom"
 )
 
-type TasmotaCollector struct {
-	state  *prometheusTasmotaStateCollector
-	sensor *prometheusTasmotaSensorCollector
+type Collector struct {
+	state  *stateCollector
+	sensor *sensorCollector
 }
 
-func NewTasmotaCollector(metricsStore *prom.Metrics) *TasmotaCollector {
-	return &TasmotaCollector{
-		state:  newPrometheusTasmotaStateCollector(metricsStore),
-		sensor: newPrometheusTasmotaSensorCollector(metricsStore),
+func NewTasmotaCollector(metricsStore *prom.Metrics) *Collector {
+	return &Collector{
+		state:  newStateCollector(metricsStore),
+		sensor: newSensorCollector(metricsStore),
 	}
 }
 
-func (collector *TasmotaCollector) InitializeMessageReceiver(broadcaster broadcast.Broadcaster) {
+func (collector *Collector) InitializeMessageReceiver(broadcaster broadcast.Broadcaster) {
 	broadcaster.Register(collector.state.channel)
 	broadcaster.Register(collector.sensor.channel)
 	go collector.state.collector()

@@ -1,7 +1,7 @@
 package prom
 
 import (
-	"github.com/klaper_/mqtt_data_exporter/naming"
+	"github.com/klaper_/mqtt_data_exporter/devices"
 	"reflect"
 	"testing"
 )
@@ -44,7 +44,7 @@ func BenchmarkMetrics_prepareLabelNames(b *testing.B) {
 func TestMetrics_prefixName(t *testing.T) {
 	type fields struct {
 		counters          map[string]counterWithMetadata
-		namer             NamingService
+		namer             DevicePropertiesProvider
 		metricsNamePrefix string
 	}
 	type args struct {
@@ -64,9 +64,9 @@ func TestMetrics_prefixName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
-				counters:          tt.fields.counters,
-				NamingService:     tt.fields.namer,
-				metricsNamePrefix: tt.fields.metricsNamePrefix,
+				counters:           tt.fields.counters,
+				propertiesProvider: tt.fields.namer,
+				metricsNamePrefix:  tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.prefixName(tt.args.name); got != tt.want {
 				t.Errorf("prefixName() = %v, want %v", got, tt.want)
@@ -78,7 +78,7 @@ func TestMetrics_prefixName(t *testing.T) {
 func TestNewMetrics_PrefixTrim(t *testing.T) {
 	type args struct {
 		metricsNamePrefix string
-		namer             NamingService
+		namer             DevicePropertiesProvider
 	}
 	tests := []struct {
 		name string
@@ -127,7 +127,7 @@ func Test_prepareLabelValues(t *testing.T) {
 func TestMetrics_prepareLabelValues(t *testing.T) {
 	type fields struct {
 		counters          map[string]counterWithMetadata
-		namer             NamingService
+		namer             DevicePropertiesProvider
 		metricsNamePrefix string
 	}
 	type args struct {
@@ -162,9 +162,9 @@ func TestMetrics_prepareLabelValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
-				counters:          tt.fields.counters,
-				NamingService:     tt.fields.namer,
-				metricsNamePrefix: tt.fields.metricsNamePrefix,
+				counters:           tt.fields.counters,
+				propertiesProvider: tt.fields.namer,
+				metricsNamePrefix:  tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.prepareLabelValues(tt.args.labelNames, tt.args.labelValues); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("prepareLabelValues() = %v, want %v", got, tt.want)
@@ -179,9 +179,9 @@ func TestMetrics_prepareLabelValues_missingValue(t *testing.T) {
 	want := []string{""}
 
 	metrics := &Metrics{
-		counters:          nil,
-		NamingService:     nil,
-		metricsNamePrefix: "",
+		counters:           nil,
+		propertiesProvider: nil,
+		metricsNamePrefix:  "",
 	}
 
 	if got := metrics.prepareLabelValues(inputLabelNames, inputLabelValues); !reflect.DeepEqual(got, want) {
@@ -190,10 +190,10 @@ func TestMetrics_prepareLabelValues_missingValue(t *testing.T) {
 }
 
 func TestMetrics_appendRestrictedToValues(t *testing.T) {
-	var namingService NamingService = TestNamingService{}
+	var namingService DevicePropertiesProvider = TestNamingService{}
 	type fields struct {
 		counters          map[string]counterWithMetadata
-		namer             NamingService
+		namer             DevicePropertiesProvider
 		metricsNamePrefix string
 	}
 	type args struct {
@@ -231,9 +231,9 @@ func TestMetrics_appendRestrictedToValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics := &Metrics{
-				counters:          tt.fields.counters,
-				NamingService:     tt.fields.namer,
-				metricsNamePrefix: tt.fields.metricsNamePrefix,
+				counters:           tt.fields.counters,
+				propertiesProvider: tt.fields.namer,
+				metricsNamePrefix:  tt.fields.metricsNamePrefix,
 			}
 			if got := metrics.appendRestrictedToValues(tt.args.deviceName, tt.args.labels); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("appendRestrictedToValues() = %v, want %v", got, tt.want)
@@ -246,7 +246,7 @@ func TestMetrics_appendRestrictedToValues_WrongDevice(t *testing.T) {
 	deviceName := "wrongDeviceName"
 	expected := map[string]string{"device": deviceName, "group": "", "friendly_name": deviceName}
 
-	metrics := &Metrics{NamingService: TestNamingService{}}
+	metrics := &Metrics{propertiesProvider: TestNamingService{}}
 	result := make(map[string]string)
 
 	if got := metrics.appendRestrictedToValues(deviceName, result); !reflect.DeepEqual(got, expected) {
@@ -256,9 +256,9 @@ func TestMetrics_appendRestrictedToValues_WrongDevice(t *testing.T) {
 
 type TestNamingService struct{}
 
-func (t TestNamingService) TranslateDevice(deviceName string) (*naming.NamerDevice, bool) {
+func (t TestNamingService) GetProperties(deviceName string) (*devices.Properties, bool) {
 	if deviceName == inputDeviceName {
-		return &naming.NamerDevice{Name: expectedDeviceFName, Device: expectedDeviceName, Group: expectedDeviceGroup}, true
+		return &devices.Properties{Name: expectedDeviceFName, Device: expectedDeviceName, Group: expectedDeviceGroup}, true
 	}
 	return nil, false
 }

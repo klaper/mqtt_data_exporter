@@ -1,4 +1,4 @@
-package naming
+package devices
 
 import (
 	"testing"
@@ -52,7 +52,7 @@ func Test_loadConfiguration_correctResult(t *testing.T) {
 
 func Test_NewNamer_loadConfig(t *testing.T) {
 	//when
-	_ = NewNamer(inputFile)
+	_ = NewProperties(inputFile)
 
 	//then
 	if configuration == nil {
@@ -62,10 +62,10 @@ func Test_NewNamer_loadConfig(t *testing.T) {
 
 func Test_TranslateDevice(t *testing.T) {
 	//given
-	namer := NewNamer(inputFile)
+	namer := NewProperties(inputFile)
 
 	//when
-	result, ok := namer.TranslateDevice("dev3")
+	result, ok := namer.GetProperties("dev3")
 
 	//then
 	if !ok {
@@ -85,10 +85,10 @@ func Test_TranslateDevice(t *testing.T) {
 
 func Test_TranslateDevice_deviceNotFound(t *testing.T) {
 	//given
-	namer := NewNamer(inputFile)
+	namer := NewProperties(inputFile)
 
 	//when
-	_, ok := namer.TranslateDevice("not existing")
+	_, ok := namer.GetProperties("not existing")
 
 	//then
 	if ok {

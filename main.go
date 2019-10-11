@@ -2,7 +2,7 @@ package main
 
 import (
 	exporterMessage "github.com/klaper_/mqtt_data_exporter/message"
-	"github.com/klaper_/mqtt_data_exporter/naming"
+	"github.com/klaper_/mqtt_data_exporter/devices"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 	"github.com/klaper_/mqtt_data_exporter/tasmota"
 	"log"
@@ -101,7 +101,17 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	metricsStore = prom.NewMetrics(*metricsPrefix, naming.NewNamer(*namingFile))
+	prepareMetricsStore(metricsPrefix, namingFile)
+
+	var tasmotaCollector = tasmota.NewTasmotaCollector(metricsStore)
+	tasmotaCollector.InitializeMessageReceiver(broadcaster)
+
+	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
+	prometheusListenAndServer(listenAddress, metricsPath)
+}
+
+func prepareMetricsStore(metricsPrefix *string, namingConfiguration *string) {
+	metricsStore = prom.NewMetrics(*metricsPrefix, devices.NewProperties(*namingConfiguration))
 	metricsStore.RegisterCounter(
 		"total_message_count",
 		"total_message_count",
@@ -114,10 +124,4 @@ func main() {
 		"Count of MQTT messages processed",
 		[]string{"processing_state", "exporter_module"},
 	)
-
-	var tasmotaCollector = tasmota.NewTasmotaCollector(metricsStore)
-	tasmotaCollector.InitializeMessageReceiver(broadcaster)
-
-	mqttInit(mqttHost, mqttClientId, mqttUsername, mqttPassword)
-	prometheusListenAndServer(listenAddress, metricsPath)
 }
