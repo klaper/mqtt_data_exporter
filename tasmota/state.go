@@ -122,10 +122,10 @@ func (collector *prometheusTasmotaStateCollector) collector() {
 			fatal("state", "error while unmarshaling", err)
 			continue
 		}
-		collector.metricsStore.Set("upTimeGauge", message.GetDeviceName(), map[string]string{}, state.Uptime.Seconds())
-		collector.metricsStore.Set("powerGauge", message.GetDeviceName(), map[string]string{}, state.Power)
+		collector.metricsStore.GaugeSet("upTimeGauge", message.GetDeviceName(), map[string]string{}, state.Uptime.Seconds())
+		collector.metricsStore.GaugeSet("powerGauge", message.GetDeviceName(), map[string]string{}, state.Power)
 
-		collector.metricsStore.Set(
+		collector.metricsStore.GaugeSet(
 			"rssiGauge",
 			message.GetDeviceName(),
 			map[string]string{

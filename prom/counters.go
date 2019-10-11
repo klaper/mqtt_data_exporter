@@ -20,7 +20,7 @@ func (metrics *Metrics) RegisterCounter( key string, name string, description st
 	return err == nil
 }
 
-func (metrics *Metrics) Inc(key string, deviceName string, labels map[string]string) {
+func (metrics *Metrics) CounterInc(key string, deviceName string, labels map[string]string) {
 	counter, found := metrics.counters[key]
 	if !found {
 		return

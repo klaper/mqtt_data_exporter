@@ -177,7 +177,7 @@ func (collector *prometheusTasmotaSensorCollector) updateState(sensor tasmotaSen
 		data := sensor.Sensors[i]
 		if !strings.HasPrefix(string(data.Type), "PM") {
 			data := sensor.Sensors[i]
-			collector.metricsStore.Set(
+			collector.metricsStore.GaugeSet(
 				string(data.Type),
 				sensor.DeviceName,
 				map[string]string{
@@ -186,7 +186,7 @@ func (collector *prometheusTasmotaSensorCollector) updateState(sensor tasmotaSen
 				data.Value,
 			)
 		} else {
-			collector.metricsStore.Set(
+			collector.metricsStore.GaugeSet(
 				"pm",
 				sensor.DeviceName,
 				map[string]string{

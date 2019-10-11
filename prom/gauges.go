@@ -20,7 +20,7 @@ func (metrics *Metrics) RegisterGauge( key string, name string, description stri
 	return err == nil
 }
 
-func (metrics *Metrics) Set(key string, deviceName string, labels map[string]string, value float64) {
+func (metrics *Metrics) GaugeSet(key string, deviceName string, labels map[string]string, value float64) {
 	counter, found := metrics.gauges[key]
 	if !found {
 		return
