@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
+func TestMetrics_RegisterGauge_Count(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 	initialLen := len(metrics.gauges)
 
 	//when
-	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if len(metrics.gauges)-1 != initialLen {
@@ -18,12 +18,12 @@ func TestMetrics_RegisterMetric_Gauge_Count(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Gauge_Key(t *testing.T) {
+func TestMetrics_RegisterGauge_Key(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 
 	//when
-	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if _, ok := metrics.gauges[firstInputMetricsKey]; !ok {
@@ -31,16 +31,16 @@ func TestMetrics_RegisterMetric_Gauge_Key(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
+func TestMetrics_RegisterGauge_MetricExists(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
 	ok := metrics.RegisterMetric(
 		GAUGE,
 		firstInputMetricsKey,
-		"TestMetrics_RegisterMetric_Gauge_MetricExists",
+		"TestMetrics_RegisterGauge_MetricExists",
 		inputMetricsDescription,
 		inputLabelNames,
 	)
@@ -51,16 +51,16 @@ func TestMetrics_RegisterMetric_Gauge_MetricExists(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Gauge_MetricAdded(t *testing.T) {
+func TestMetrics_RegisterGauge_MetricAdded(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(GAUGE, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
 	ok := metrics.RegisterMetric(
 		GAUGE,
 		secondInputMetricsKey,
-		"TestMetrics_RegisterMetric_Gauge_MetricAdded",
+		"TestMetrics_RegisterGauge_MetricAdded",
 		inputMetricsDescription,
 		inputLabelNames,
 	)

@@ -2,13 +2,13 @@ package prom
 
 import "testing"
 
-func TestMetrics_RegisterMetric_Counter_Count(t *testing.T) {
+func TestMetrics_RegisterCounter_Count(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 	initialLen := len(metrics.counters)
 
 	//when
-	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if len(metrics.counters)-1 != initialLen {
@@ -16,12 +16,12 @@ func TestMetrics_RegisterMetric_Counter_Count(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Counter_Key(t *testing.T) {
+func TestMetrics_RegisterCounter_Key(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
 
 	//when
-	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//then
 	if _, ok := metrics.counters[firstInputMetricsKey]; !ok {
@@ -29,16 +29,16 @@ func TestMetrics_RegisterMetric_Counter_Key(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
+func TestMetrics_RegisterCounter_MetricExists(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
 	ok := metrics.RegisterMetric(
 		COUNTER,
 		firstInputMetricsKey,
-		"TestMetrics_RegisterMetric_Counter_MetricExists",
+		"TestMetrics_RegisterCounter_MetricExists",
 		inputMetricsDescription,
 		inputLabelNames,
 		)
@@ -49,16 +49,16 @@ func TestMetrics_RegisterMetric_Counter_MetricExists(t *testing.T) {
 	}
 }
 
-func TestMetrics_RegisterMetric_Counter_MetricAdded(t *testing.T) {
+func TestMetrics_RegisterCounter_MetricAdded(t *testing.T) {
 	//given
 	metrics := NewMetrics("", nil)
-	metrics.RegisterMetric(COUNTER, firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
+	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
 	ok := metrics.RegisterMetric(
 		COUNTER,
 		secondInputMetricsKey,
-		"TestMetrics_RegisterMetric_Counter_MetricAdded",
+		"TestMetrics_RegisterCounter_MetricAdded",
 		inputMetricsDescription,
 		inputLabelNames,
 		)
