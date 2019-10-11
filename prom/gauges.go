@@ -2,7 +2,7 @@ package prom
 
 import "github.com/prometheus/client_golang/prometheus"
 
-func (metrics *Metrics) RegisterGauge( key string, name string, description string, labelNames []string) bool {
+func (metrics *Metrics) RegisterGauge(key string, name string, description string, labelNames []string) bool {
 	_, ok := metrics.gauges[key]
 	if ok {
 		return false

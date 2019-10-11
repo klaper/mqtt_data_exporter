@@ -40,7 +40,7 @@ func TestMetrics_RegisterCounter_MetricExists(t *testing.T) {
 		"TestMetrics_RegisterCounter_MetricExists",
 		inputMetricsDescription,
 		inputLabelNames,
-		)
+	)
 
 	//then
 	if ok {
@@ -59,7 +59,7 @@ func TestMetrics_RegisterCounter_MetricAdded(t *testing.T) {
 		"TestMetrics_RegisterCounter_MetricAdded",
 		inputMetricsDescription,
 		inputLabelNames,
-		)
+	)
 
 	//then
 	if !ok {

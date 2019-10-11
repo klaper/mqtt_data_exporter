@@ -9,7 +9,7 @@ import (
 var (
 	inputDeviceName          = "SomeDeviceName"
 	firstInputMetricsKey     = "SomeMetricKey"
-	secondInputMetricsKey     = "OtherMetricKey"
+	secondInputMetricsKey    = "OtherMetricKey"
 	firstInputMetricsName    = "SomeMetricName"
 	secondInputMetricsName   = "OtherMetricName"
 	inputMetricsDescription  = "SomeMetricDescription"

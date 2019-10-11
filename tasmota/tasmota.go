@@ -1,7 +1,7 @@
 package tasmota
 
 import (
-	broadcast "github.com/dustin/go-broadcast"
+	"github.com/dustin/go-broadcast"
 	"github.com/klaper_/mqtt_data_exporter/prom"
 )
 

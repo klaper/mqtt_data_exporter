@@ -5,13 +5,6 @@ import (
 	"strings"
 )
 
-type MetricType int
-
-const (
-	COUNTER MetricType = 0
-	GAUGE   MetricType = 1
-)
-
 type NamingService interface {
 	TranslateDevice(deviceName string) (*naming.NamerDevice, bool)
 }
@@ -84,4 +77,3 @@ func contains(a []string, x string) bool {
 }
 
 var restrictedLabelNames = []string{"device", "group", "friendly_name"}
-
