@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-var restrictedLabelNames = []string{"device", "group", "friendly_name"}
-
 type MetricType int
 
 const (
@@ -15,14 +13,8 @@ const (
 	GAUGE   MetricType = 1
 )
 
-type counterWithMetadata struct {
-	metric *prometheus.CounterVec
-	labels []string
-}
-
-type gaugeWithMetadata struct {
-	metric *prometheus.GaugeVec
-	labels []string
+type NamingService interface {
+	TranslateDevice(deviceName string) (*naming.NamerDevice, bool)
 }
 
 type Metrics struct {
@@ -41,10 +33,6 @@ func NewMetrics(metricsNamePrefix string, namingService NamingService) *Metrics 
 	}
 }
 
-func (metrics *Metrics) prefixName(name string) string {
-	return metrics.metricsNamePrefix + "_" + strings.Trim(name, "_")
-}
-
 func (metrics *Metrics) RegisterMetric(metricsType MetricType, key string, name string, description string, labelNames []string) bool {
 	switch metricsType {
 	case COUNTER:
@@ -53,38 +41,6 @@ func (metrics *Metrics) RegisterMetric(metricsType MetricType, key string, name 
 		return metrics.prepareGauge(key, name, description, labelNames)
 	}
 	return false
-}
-func (metrics *Metrics) prepareGauge(key string, name string, description string, labelNames []string) bool {
-	_, ok := metrics.gauges[key]
-	if ok {
-		return false
-	}
-	labels := prepareLabelNames(labelNames)
-	metrics.gauges[key] = gaugeWithMetadata{
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: metrics.prefixName(name),
-				Help: description,
-			}, labels),
-		labels: labels,
-	}
-	return true
-}
-func (metrics *Metrics) prepareCounter(key string, name string, description string, labelNames []string) bool {
-	_, ok := metrics.counters[key]
-	if ok {
-		return false
-	}
-	labels := prepareLabelNames(labelNames)
-	metrics.counters[key] = counterWithMetadata{
-		metric: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: metrics.prefixName(name),
-				Help: description,
-			}, labels),
-		labels: labels,
-	}
-	return true
 }
 
 func (metrics *Metrics) Inc(key string, deviceName string, labels map[string]string) {
@@ -103,6 +59,43 @@ func (metrics *Metrics) Set(key string, deviceName string, labels map[string]str
 	}
 	var completedLabels = metrics.prepareLabelValues(counter.labels, metrics.appendRestrictedToValues(deviceName, labels))
 	counter.metric.WithLabelValues(completedLabels...).Set(value)
+}
+func (metrics *Metrics) prefixName(name string) string {
+	return metrics.metricsNamePrefix + "_" + strings.Trim(name, "_")
+}
+
+func (metrics *Metrics) prepareGauge(key string, name string, description string, labelNames []string) bool {
+	_, ok := metrics.gauges[key]
+	if ok {
+		return false
+	}
+	labels := prepareLabelNames(labelNames)
+	metrics.gauges[key] = gaugeWithMetadata{
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: metrics.prefixName(name),
+				Help: description,
+			}, labels),
+		labels: labels,
+	}
+	return true
+}
+
+func (metrics *Metrics) prepareCounter(key string, name string, description string, labelNames []string) bool {
+	_, ok := metrics.counters[key]
+	if ok {
+		return false
+	}
+	labels := prepareLabelNames(labelNames)
+	metrics.counters[key] = counterWithMetadata{
+		metric: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: metrics.prefixName(name),
+				Help: description,
+			}, labels),
+		labels: labels,
+	}
+	return true
 }
 
 func (metrics *Metrics) prepareLabelValues(labelNames []string, labelValues map[string]string) []string {
@@ -152,6 +145,14 @@ func contains(a []string, x string) bool {
 	return false
 }
 
-type NamingService interface {
-	TranslateDevice(deviceName string) (*naming.NamerDevice, bool)
+var restrictedLabelNames = []string{"device", "group", "friendly_name"}
+
+type counterWithMetadata struct {
+	metric *prometheus.CounterVec
+	labels []string
+}
+
+type gaugeWithMetadata struct {
+	metric *prometheus.GaugeVec
+	labels []string
 }
