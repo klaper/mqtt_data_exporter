@@ -12,7 +12,7 @@ import (
 
 const sensorClientId = "tasmota_sensor"
 
-var sensorNames = []string{"SI7021", "SDS0X1", "BH1750", "BMP280"}
+var sensorNames = []string{"SI7021", "SDS0X1", "BH1750", "BMP280", "BME280"}
 var sensorTypes = []sensorType{temperature, pressure, humidity, pm10, pm2, illuminance}
 var unitFields = regexp.MustCompile("Unit$")
 
