@@ -1,6 +1,8 @@
 livingroom:
   - device: dev1
     name: d1
+    sensors:
+      s1: sensor1
   - device: dev2
     name: d2
   - device: d4

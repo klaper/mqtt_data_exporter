@@ -16,13 +16,14 @@ var (
 	inputLabelNames          = []string{"label1", "label2"}
 	processLabelsBenchResult []string
 	prefixNameBenchResult    string
-	restrictedLabels         = []string{"device", "group", "friendly_name"}
+	restrictedLabels         = []string{"device", "group", "friendly_name", "sensor_alias"}
 	expectedDeviceName       = "deviceName"
 	expectedDeviceGroup      = "deviceGroup"
 	expectedDeviceFName      = "deviceFName"
+	expectedSensorAliases    = map[string]string{"s1": "sensor1"}
 )
 
-//BenchmarkMetrics_prefixName-8      	 5568180	       189 ns/op
+//BenchmarkMetrics_prefixName-8          	 6053608	       192 ns/op
 func BenchmarkMetrics_prefixName(b *testing.B) {
 	metrics := NewMetrics("_prefix_", nil)
 	var r string
@@ -32,7 +33,7 @@ func BenchmarkMetrics_prefixName(b *testing.B) {
 	prefixNameBenchResult = r
 }
 
-//BenchmarkMetrics_processLabels-8   	 4051521	       300 ns/op
+//BenchmarkMetrics_prepareLabelNames-8   	 3840579	       315 ns/op
 func BenchmarkMetrics_prepareLabelNames(b *testing.B) {
 	var r []string
 	for i := 0; i < b.N; i++ {
@@ -227,6 +228,30 @@ func TestMetrics_appendRestrictedToValues(t *testing.T) {
 				"new":           "way",
 			},
 		},
+		{
+			"sensor alias: sensor not on list",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"sensor_name": "some_sensor_name"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"sensor_name":   "some_sensor_name",
+				"sensor_alias":  "some_sensor_name",
+			},
+		},
+		{
+			"sensor alias: sensor not on list",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"sensor_name": "s1"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"sensor_name":   "s1",
+				"sensor_alias":  "sensor1",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -258,7 +283,7 @@ type TestNamingService struct{}
 
 func (t TestNamingService) GetProperties(deviceName string) (*devices.Properties, bool) {
 	if deviceName == inputDeviceName {
-		return &devices.Properties{Name: expectedDeviceFName, Device: expectedDeviceName, Group: expectedDeviceGroup}, true
+		return &devices.Properties{Name: expectedDeviceFName, Device: expectedDeviceName, Group: expectedDeviceGroup, Sensors: expectedSensorAliases}, true
 	}
 	return nil, false
 }

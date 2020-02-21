@@ -7,9 +7,10 @@ import (
 )
 
 type Properties struct {
-	Device string
-	Name   string
-	Group  string
+	Device  string
+	Name    string
+	Group   string
+	Sensors map[string]string
 }
 type Configuration map[string]Properties
 
@@ -17,8 +18,9 @@ var configuration = Configuration(nil)
 
 func loadConfiguration(file string) Configuration {
 	type YamlDevice struct {
-		Device string `yaml:"device"`
-		Name   string `yaml:"name"`
+		Device  string            `yaml:"device"`
+		Name    string            `yaml:"name"`
+		Sensors map[string]string `yaml:"sensors"`
 	}
 
 	type YamlConfiguration map[string][]YamlDevice
@@ -39,8 +41,12 @@ func loadConfiguration(file string) Configuration {
 		devices := configuration[group]
 		for i := range devices {
 			device := devices[i]
+			var sensors map[string]string
+			if sensors = device.Sensors; sensors == nil {
+				sensors = make(map[string]string, 0)
+			}
 
-			result[device.Device] = Properties{device.Device, device.Name, group}
+			result[device.Device] = Properties{device.Device, device.Name, group, sensors}
 		}
 	}
 
@@ -61,5 +67,5 @@ func (*PropertiesProvider) GetProperties(deviceName string) (*Properties, bool) 
 	if !ok {
 		return nil, false
 	}
-	return &Properties{device.Device, device.Name, device.Group}, true
+	return &Properties{device.Device, device.Name, device.Group, device.Sensors}, true
 }

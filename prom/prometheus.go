@@ -44,12 +44,26 @@ func (metrics *Metrics) appendRestrictedToValues(deviceName string, labels map[s
 		result[k] = v
 	}
 	if !ok {
-		deviceInfo = &devices.Properties{Name: deviceName, Group: "", Device: deviceName}
+		deviceInfo = &devices.Properties{Name: deviceName, Group: "", Device: deviceName, Sensors: make(map[string]string, 0)}
 	}
 	result["device"] = deviceInfo.Device
 	result["group"] = deviceInfo.Group
 	result["friendly_name"] = deviceInfo.Name
+	if alias, ok := getSensorAlias(labels, deviceInfo); ok {
+		result["sensor_alias"] = alias
+	}
+
 	return result
+}
+
+func getSensorAlias(labels map[string]string, deviceInfo *devices.Properties) (string, bool) {
+	if name, has_sensor := labels["sensor_name"]; has_sensor {
+		if sensor, has_alias := deviceInfo.Sensors[name]; has_alias {
+			return sensor, true
+		}
+		return name, true
+	}
+	return "", false
 }
 
 func prepareLabelNames(labelNames []string) []string {
@@ -76,4 +90,4 @@ func contains(a []string, x string) bool {
 	return false
 }
 
-var restrictedLabelNames = []string{"device", "group", "friendly_name"}
+var restrictedLabelNames = []string{"device", "group", "friendly_name", "sensor_alias"}

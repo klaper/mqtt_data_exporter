@@ -25,11 +25,13 @@ log.level:              [Default: 2]                                Log level
 
 #### naming conversion file format:
 ```
-Group1:                     # "group" attribute of metric
-  - device: device_name     # device name from mqtt message 
-                            # used for matching
-                            # "device" attribute of metrics 
-    name: friendly_name     # "friendly_name" attribute value
+Group1:                             # "group" attribute of metric
+  - device: device_name             # device name from mqtt message
+                                    # used for matching
+                                    # "device" attribute of metrics
+    name: friendly_name             # "friendly_name" attribute value
+    sensors:				        # list of "sensor_name"
+        sensor_name: sensor_alias   # for this device for every readout from "sensor_name" there will be "sensor_alias" label added
 ```
 
 #### log levels parameter values

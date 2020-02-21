@@ -48,6 +48,10 @@ func Test_loadConfiguration_correctResult(t *testing.T) {
 	if result.Name != "d1" {
 		t.Errorf("name => Result: value %q != expected %q", result.Name, "d1")
 	}
+	if result.Sensors == nil || len(result.Sensors) == 0 || result.Sensors["s1"] != "sensor1" {
+		t.Errorf("sensor1 => Result: value %+v != expected %q", result.Sensors, "sensor1")
+	}
+
 }
 
 func Test_NewNamer_loadConfig(t *testing.T) {
@@ -80,6 +84,9 @@ func Test_TranslateDevice(t *testing.T) {
 	}
 	if result.Name != "d3" {
 		t.Errorf("name => Result: value %q != expected %q", result.Name, "d3")
+	}
+	if result.Sensors == nil || len(result.Sensors) != 0 {
+		t.Errorf("sensors => Result: value %d != expected %d", len(result.Sensors), 0)
 	}
 }
 
