@@ -16,14 +16,14 @@ var (
 	inputLabelNames          = []string{"label1", "label2"}
 	processLabelsBenchResult []string
 	prefixNameBenchResult    string
-	restrictedLabels         = []string{"device", "group", "friendly_name", "sensor_alias"}
+	restrictedLabels         = []string{"device", "group", "friendly_name"}
 	expectedDeviceName       = "deviceName"
 	expectedDeviceGroup      = "deviceGroup"
 	expectedDeviceFName      = "deviceFName"
 	expectedSensorAliases    = map[string]string{"s1": "sensor1"}
 )
 
-//BenchmarkMetrics_prefixName-8          	 6053608	       192 ns/op
+//BenchmarkMetrics_prefixName-8          	 6310520	       188 ns/op
 func BenchmarkMetrics_prefixName(b *testing.B) {
 	metrics := NewMetrics("_prefix_", nil)
 	var r string
@@ -33,7 +33,7 @@ func BenchmarkMetrics_prefixName(b *testing.B) {
 	prefixNameBenchResult = r
 }
 
-//BenchmarkMetrics_prepareLabelNames-8   	 3840579	       315 ns/op
+//BenchmarkMetrics_prepareLabelNames-8   	 3160408	       380 ns/op
 func BenchmarkMetrics_prepareLabelNames(b *testing.B) {
 	var r []string
 	for i := 0; i < b.N; i++ {
@@ -110,6 +110,7 @@ func Test_prepareLabelValues(t *testing.T) {
 		{"empty set", args{labelNames: []string{}}, restrictedLabels},
 		{"adding sets", args{labelNames: []string{"Label1"}}, append(restrictedLabels, "Label1")},
 		{"repeating input", args{labelNames: []string{"Label1", "Label1"}}, append(restrictedLabels, "Label1")},
+		{"repeating input", args{labelNames: []string{"sensor_name"}}, append(restrictedLabels, "sensor_name", "sensor_alias")},
 		{
 			"adding sets and renaming to module_",
 			args{labelNames: []string{restrictedLabels[0]}},
@@ -262,6 +263,73 @@ func TestMetrics_appendRestrictedToValues(t *testing.T) {
 			}
 			if got := metrics.appendRestrictedToValues(tt.args.deviceName, tt.args.labels); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("appendRestrictedToValues() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMetrics_AddSensorAlias(t *testing.T) {
+	var namingService DevicePropertiesProvider = TestNamingService{}
+	type fields struct {
+		counters          map[string]counterWithMetadata
+		namer             DevicePropertiesProvider
+		metricsNamePrefix string
+	}
+	type args struct {
+		deviceName string
+		labels     map[string]string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   map[string]string
+	}{
+		{
+			"add sensor alias",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"sensor_name": "some_sensor_name"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"sensor_name":   "some_sensor_name",
+				"sensor_alias":  "some_sensor_name",
+			},
+		},
+		{
+			"add sensor name if no replacement found",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"sensor_name": "s2"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"sensor_name":   "s2",
+				"sensor_alias":  "s2",
+			},
+		},
+		{
+			"dont add label when no sensor_name label found",
+			fields{namer: namingService},
+			args{deviceName: inputDeviceName, labels: map[string]string{"label": "value"}},
+			map[string]string{
+				"device":        expectedDeviceName,
+				"group":         expectedDeviceGroup,
+				"friendly_name": expectedDeviceFName,
+				"label":         "value",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			metrics := &Metrics{
+				counters:           tt.fields.counters,
+				propertiesProvider: tt.fields.namer,
+				metricsNamePrefix:  tt.fields.metricsNamePrefix,
+			}
+			if got := metrics.appendRestrictedToValues(tt.args.deviceName, tt.args.labels); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("addSensorAlias() = %v, want %v", got, tt.want)
 			}
 		})
 	}
