@@ -1,12 +1,13 @@
 package tasmota
 
 import (
-	"github.com/klaper_/mqtt_data_exporter/logger"
-	"github.com/klaper_/mqtt_data_exporter/prom"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/klaper_/mqtt_data_exporter/logger"
+	"github.com/klaper_/mqtt_data_exporter/prom"
 
 	"gopkg.in/yaml.v3"
 )
@@ -18,6 +19,7 @@ var durationRegex = regexp.MustCompile(`(?P<days>\d+)?T?(?P<hours>\d+)?:(?P<minu
 type Wifi struct {
 	Ap      int    `yaml:"AP"`
 	Ssid    string `yaml:"SSId"`
+	Bssid   string `yaml:"BSSId"`
 	Channel int    `yaml:"Channel"`
 	Rssi    int    `yaml:"RSSI"`
 }
@@ -91,7 +93,7 @@ func newStateCollector(metricsStore *prom.Metrics) (collector *stateCollector) {
 		"rssiGauge",
 		"tasmota_state_rssi",
 		"Signal strength of tasmota entity",
-		[]string{"ssid", "channel", "ap_index"},
+		[]string{"ssid", "bssid", "channel", "ap_index"},
 	)
 	metricsStore.RegisterGauge(
 		"powerGauge",
@@ -131,6 +133,7 @@ func (collector *stateCollector) collector() {
 			message.GetDeviceName(),
 			map[string]string{
 				"ssid":     state.Wifi.Ssid,
+				"bssid":    state.Wifi.Bssid,
 				"channel":  strconv.Itoa(state.Wifi.Channel),
 				"ap_index": strconv.Itoa(state.Wifi.Ap),
 			},

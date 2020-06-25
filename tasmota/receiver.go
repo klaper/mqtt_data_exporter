@@ -29,7 +29,7 @@ func receiveMessage(tmp interface{}, module string, topicValidator func(string) 
 	}
 	logger.Debug(module, "Message(%d).Topic %q", (message).MessageID(), (message).Topic())
 	if !topicValidator((message).Topic()) {
-		logger.Debug(module, "DEBUG: Message(%d) was skipped due to wrong topic", (message).MessageID())
+		logger.Debug(module, "DEBUG: Message(%d) was skipped due to wrong topic %s", (message).MessageID(), (message).Topic())
 		message.ProcessMessage(module, exporterMessage.Ignored)
 		return nil, TopicValidatedToFalse{message: "Skipped due to wrong topic"}
 	}
