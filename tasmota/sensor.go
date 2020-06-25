@@ -2,18 +2,19 @@ package tasmota
 
 import (
 	"errors"
-	"github.com/klaper_/mqtt_data_exporter/logger"
-	"github.com/klaper_/mqtt_data_exporter/prom"
 	"regexp"
 	"strings"
+
+	"github.com/klaper_/mqtt_data_exporter/logger"
+	"github.com/klaper_/mqtt_data_exporter/prom"
 
 	"gopkg.in/yaml.v3"
 )
 
 const sensorClientId = "tasmota_sensor"
 
-var sensorNames = []string{"SI7021", "SDS0X1", "BH1750", "BMP280", "BME280"}
-var sensorTypes = []sensorType{temperature, pressure, humidity, pm10, pm2, illuminance}
+var sensorNames = []string{"SI7021", "SDS0X1", "BH1750", "BMP280", "BME280", "ENERGY"}
+var sensorTypes = []sensorType{temperature, pressure, humidity, pm10, pm2, illuminance, current, voltage, power, apparentPower, reactivePower, total}
 var unitFields = regexp.MustCompile("Unit$")
 
 type sensorType string
@@ -25,6 +26,14 @@ const (
 	pm10        sensorType = "PM10"
 	pm2         sensorType = "PM2.5"
 	illuminance sensorType = "Illuminance"
+
+	// ENERGY sensor metrics
+	current       sensorType = "Current"
+	voltage       sensorType = "Voltage"
+	power         sensorType = "Power"
+	apparentPower sensorType = "ApparentPower"
+	reactivePower sensorType = "ReactivePower"
+	total         sensorType = "Total"
 )
 
 type sensorCollector struct {
@@ -135,7 +144,7 @@ func newSensorCollector(metricsStore *prom.Metrics) (collector *sensorCollector)
 			metricsStore.RegisterGauge(
 				string(sensorTypes[sensor]),
 				"tasmota_sensor_"+strings.Replace(strings.ToLower(string(sensorTypes[sensor])), ".", "", 1),
-				string(sensorTypes[sensor])+"tasmota sensor data",
+				string(sensorTypes[sensor])+" tasmota sensor data",
 				[]string{"sensor_name"},
 			)
 		}
