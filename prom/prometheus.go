@@ -15,14 +15,18 @@ type Metrics struct {
 	gauges             map[string]gaugeWithMetadata
 	propertiesProvider DevicePropertiesProvider
 	metricsNamePrefix  string
+	gaugeCleaner       *gaugeCleaner
 }
 
 func NewMetrics(metricsNamePrefix string, propertiesProvider DevicePropertiesProvider) *Metrics {
+	gaugeCleaner := NewGaugeCleaner()
+	gaugeCleaner.Run()
 	return &Metrics{
 		counters:           make(map[string]counterWithMetadata),
 		gauges:             make(map[string]gaugeWithMetadata),
 		propertiesProvider: propertiesProvider,
 		metricsNamePrefix:  strings.Trim(metricsNamePrefix, "_"),
+		gaugeCleaner:       gaugeCleaner,
 	}
 }
 
