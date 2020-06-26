@@ -100,7 +100,7 @@ func Test_unmarshal_vcc(t *testing.T) {
 
 func Test_unmarshal_wifi(t *testing.T) {
 	//given
-	expected := Wifi{Ap: 1, Ssid: "example_ssid", Channel: 6, Rssi: 80}
+	expected := Wifi{Ap: 1, Ssid: "example_ssid", Bssid: "01:02:03:04:05:06",Channel: 6, Rssi: 80}
 	result := state{}
 
 	//when
