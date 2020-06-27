@@ -59,20 +59,20 @@ func (metrics *Metrics) appendRestrictedToValues(deviceName string, labels map[s
 		logger.Debug("prometheus_naming", "setting (%q,%b) sensor alias for device %s", alias, ok, deviceName)
 		result["sensor_alias"] = alias
 	}
-	logger.Debug("promehteus_naming", "returning %+v labels", result)
+	logger.Debug("prometheus_naming", "returning %+v labels", result)
 	return result
 }
 
 func getSensorAlias(labels map[string]string, deviceInfo *devices.Properties) (string, bool) {
-	if name, has_sensor := labels["sensor_name"]; has_sensor {
-		logger.Debug("prometheus_naming", "got sensor name (%q,%b) for: %+v", name, has_sensor, labels)
-		if sensor, has_alias := deviceInfo.Sensors[name]; has_alias {
-			logger.Debug("prometheus_naming", "got alias (%q,%b) for: %+v", sensor, has_alias, labels)
+	if name, hasSensor := labels["sensor_name"]; hasSensor {
+		logger.Debug("prometheus_naming", "got sensor name (%q,%b) for: %+v", name, hasSensor, labels)
+		if sensor, hasAlias := deviceInfo.Sensors[name]; hasAlias {
+			logger.Debug("prometheus_naming", "got alias (%q,%b) for: %+v", sensor, hasAlias, labels)
 			return sensor, true
 		}
 		return name, true
 	}
-	logger.Debug("promehteus", "got no sensor_name for %+v", labels)
+	logger.Debug("prometheus", "got no sensor_name for %+v", labels)
 	return "", false
 }
 

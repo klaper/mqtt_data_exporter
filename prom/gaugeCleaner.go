@@ -192,7 +192,7 @@ func (gc *gaugeCleaner) clean() {
 
 func calculateHash(key string, labels map[string]string) string {
 	sortedKeys := make([]string, 0)
-	for key, _ := range labels {
+	for key := range labels {
 		sortedKeys = append(sortedKeys, key)
 	}
 	sort.Strings(sortedKeys)
