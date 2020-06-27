@@ -130,6 +130,7 @@ func (gc *gaugeCleaner) clean() {
 		return
 	}
 	logger.Debug("gauge_cleaner", "Got %d entities to clean", len(expired))
+	//first finding then removing expired metrics optimises lock time
 	start := time.Now()
 	gc.lock.Lock()
 	for _, key := range expired {

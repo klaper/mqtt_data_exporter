@@ -57,7 +57,7 @@ func Test_receiveMessageDifferentTopic(t *testing.T) {
 	//given
 	inputTmp := exporterMessage.NewExporterMessage(
 		messageMock{topic: "some/topic/value"},
-		prom.NewMetrics("", nil),
+		prom.NewMetrics("", nil, 0),
 	)
 	inputModule := "module"
 
@@ -74,7 +74,7 @@ func Test_receiveMessageSameTopic(t *testing.T) {
 	//given
 	inputTmp := exporterMessage.NewExporterMessage(
 		messageMock{topic: "some/topic/value"},
-		prom.NewMetrics("", nil),
+		prom.NewMetrics("", nil, 0),
 	)
 	inputModule := "module"
 

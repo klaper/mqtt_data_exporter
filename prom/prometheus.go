@@ -4,6 +4,7 @@ import (
 	"github.com/klaper_/mqtt_data_exporter/devices"
 	"github.com/klaper_/mqtt_data_exporter/logger"
 	"strings"
+	"time"
 )
 
 type DevicePropertiesProvider interface {
@@ -18,8 +19,8 @@ type Metrics struct {
 	gaugeCleaner       *gaugeCleaner
 }
 
-func NewMetrics(metricsNamePrefix string, propertiesProvider DevicePropertiesProvider) *Metrics {
-	gaugeCleaner := NewGaugeCleaner()
+func NewMetrics(metricsNamePrefix string, propertiesProvider DevicePropertiesProvider, metricsCleanerTimeout time.Duration) *Metrics {
+	gaugeCleaner := NewGaugeCleanerWithTimeout(metricsCleanerTimeout)
 	gaugeCleaner.Run()
 	return &Metrics{
 		counters:           make(map[string]counterWithMetadata),

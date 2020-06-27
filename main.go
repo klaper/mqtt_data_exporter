@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/dustin/go-broadcast"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -104,6 +105,10 @@ func main() {
 			"log.level",
 			"DEBUG = 1; INFO = 2; WARN = 3; ERROR = 4; OFF = 5",
 		).Default("2").String()
+		metricsCleanerTimeout = kingpin.Flag(
+			"cleaner.gauge.timeout",
+			"Timeout for gauge value cleaner (0 = disabled)",
+		).Default("0s").Duration()
 	)
 
 	kingpin.HelpFlag.Short('h')
@@ -115,7 +120,7 @@ func main() {
 	}
 	logger.SetLogLevel(logger.Loglevel(toSet))
 
-	prepareMetricsStore(metricsPrefix, namingFile)
+	prepareMetricsStore(metricsPrefix, namingFile, metricsCleanerTimeout)
 
 	var tasmotaCollector = tasmota.NewTasmotaCollector(metricsStore)
 	tasmotaCollector.InitializeMessageReceiver(broadcaster)
@@ -124,8 +129,8 @@ func main() {
 	prometheusListenAndServer(listenAddress, metricsPath)
 }
 
-func prepareMetricsStore(metricsPrefix *string, namingConfiguration *string) {
-	metricsStore = prom.NewMetrics(*metricsPrefix, devices.NewProperties(*namingConfiguration))
+func prepareMetricsStore(metricsPrefix *string, namingConfiguration *string, metricsCleanerTimeout *time.Duration) {
+	metricsStore = prom.NewMetrics(*metricsPrefix, devices.NewProperties(*namingConfiguration), *metricsCleanerTimeout)
 	metricsStore.RegisterCounter(
 		"total_message_count",
 		"total_message_count",
