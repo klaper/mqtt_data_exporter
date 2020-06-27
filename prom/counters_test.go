@@ -4,7 +4,7 @@ import "testing"
 
 func TestMetrics_RegisterCounter_Count(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	initialLen := len(metrics.counters)
 
 	//when
@@ -18,7 +18,7 @@ func TestMetrics_RegisterCounter_Count(t *testing.T) {
 
 func TestMetrics_RegisterCounter_Key(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 
 	//when
 	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
@@ -31,7 +31,7 @@ func TestMetrics_RegisterCounter_Key(t *testing.T) {
 
 func TestMetrics_RegisterCounter_MetricExists(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
@@ -50,7 +50,7 @@ func TestMetrics_RegisterCounter_MetricExists(t *testing.T) {
 
 func TestMetrics_RegisterCounter_MetricAdded(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	metrics.RegisterCounter(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when

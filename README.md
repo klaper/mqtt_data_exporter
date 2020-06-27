@@ -21,6 +21,7 @@ mqtt.password:          [Default: ""]                               Mqtt passwor
 naming.config:          [Default: "/etc/mqtt_exporter/naming.yaml"] File containg naming convertions
 metrics.prefix:         [Default: "mqtt_exporter"]                  Prefix for metrics names
 log.level:              [Default: 2]                                Log level
+cleaner.gauge.timeout:  [Default: 0s]                               Timeout for gauge value cleaner (0 = disabled)
 ```
 
 #### naming conversion file format:
@@ -42,6 +43,11 @@ Group1:                             # "group" attribute of metric
 |   3   |  WARN   |
 |   4   |  ERROR  | 
 |   5   |  OFF    |
+
+#### Gauge value cleaner what does it do?
+
+Prevents dangling metrics in prometheus by removing metrics that were not updated for set time. Metrics will be removed within 5 seconds after `cleaner.gauge.timeout` of not being updated.  
+Useful when one of your devices disappears.
 
 ### Running in docker
 

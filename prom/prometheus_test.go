@@ -25,7 +25,7 @@ var (
 
 //BenchmarkMetrics_prefixName-8          	 6310520	       188 ns/op
 func BenchmarkMetrics_prefixName(b *testing.B) {
-	metrics := NewMetrics("_prefix_", nil)
+	metrics := NewMetrics("_prefix_", nil, 0)
 	var r string
 	for i := 0; i < b.N; i++ {
 		r = metrics.prefixName("_n_a_m_e_")
@@ -91,7 +91,7 @@ func TestNewMetrics_PrefixTrim(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMetrics(tt.args.metricsNamePrefix, tt.args.namer); got.metricsNamePrefix != tt.want {
+			if got := NewMetrics(tt.args.metricsNamePrefix, tt.args.namer, 0); got.metricsNamePrefix != tt.want {
 				t.Errorf("NewMetrics() = %v, want %v", got.metricsNamePrefix, tt.want)
 			}
 		})

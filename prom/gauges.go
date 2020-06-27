@@ -16,6 +16,7 @@ func (metrics *Metrics) RegisterGauge(key string, name string, description strin
 			}, labels),
 		labels: labels,
 	}
+	metrics.gaugeCleaner.RegisterGauge(key, metrics.gauges[key].metric)
 	err := prometheus.Register(metrics.gauges[key].metric)
 	return err == nil
 }
@@ -25,8 +26,9 @@ func (metrics *Metrics) GaugeSet(key string, deviceName string, labels map[strin
 	if !found {
 		return
 	}
-	var completedLabels = metrics.prepareLabelValues(counter.labels, metrics.appendRestrictedToValues(deviceName, labels))
-	counter.metric.WithLabelValues(completedLabels...).Set(value)
+	labelValues := metrics.appendRestrictedToValues(deviceName, labels)
+	counter.metric.WithLabelValues(metrics.prepareLabelValues(counter.labels, labelValues)...).Set(value)
+	metrics.gaugeCleaner.updateMetric(key, labelValues)
 }
 
 type gaugeWithMetadata struct {

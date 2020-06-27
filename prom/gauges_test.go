@@ -6,7 +6,7 @@ import (
 
 func TestMetrics_RegisterGauge_Count(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	initialLen := len(metrics.gauges)
 
 	//when
@@ -20,7 +20,7 @@ func TestMetrics_RegisterGauge_Count(t *testing.T) {
 
 func TestMetrics_RegisterGauge_Key(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 
 	//when
 	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
@@ -33,7 +33,7 @@ func TestMetrics_RegisterGauge_Key(t *testing.T) {
 
 func TestMetrics_RegisterGauge_MetricExists(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when
@@ -52,7 +52,7 @@ func TestMetrics_RegisterGauge_MetricExists(t *testing.T) {
 
 func TestMetrics_RegisterGauge_MetricAdded(t *testing.T) {
 	//given
-	metrics := NewMetrics("", nil)
+	metrics := NewMetrics("", nil, 0)
 	metrics.RegisterGauge(firstInputMetricsKey, firstInputMetricsName, inputMetricsDescription, inputLabelNames)
 
 	//when

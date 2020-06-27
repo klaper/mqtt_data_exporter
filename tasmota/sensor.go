@@ -169,7 +169,7 @@ func (collector *sensorCollector) collector() {
 		}
 
 		sensor := sensor{}
-		err = yaml.Unmarshal([]byte((message).Payload()), &sensor)
+		err = yaml.Unmarshal((message).Payload(), &sensor)
 		if err != nil {
 			logger.Fatal(sensorClientId, "error while unmarshaling", err)
 			return
