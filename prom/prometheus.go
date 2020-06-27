@@ -20,7 +20,7 @@ type Metrics struct {
 }
 
 func NewMetrics(metricsNamePrefix string, propertiesProvider DevicePropertiesProvider, metricsCleanerTimeout time.Duration) *Metrics {
-	gaugeCleaner := NewGaugeCleanerWithTimeout(metricsCleanerTimeout)
+	gaugeCleaner := NewGaugeCleanerWithTimeout(metricsCleanerTimeout, metricsNamePrefix)
 	gaugeCleaner.Run()
 	return &Metrics{
 		counters:           make(map[string]counterWithMetadata),

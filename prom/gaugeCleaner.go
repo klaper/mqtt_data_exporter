@@ -10,6 +10,18 @@ import (
 	"time"
 )
 
+const (
+	MetricsUpdatesCount = "cleaner_update_count"
+	MetricsCleanTime    = "cleaner_clean_time"
+	MetricsCleanCount   = "cleaner_clean_count"
+)
+
+var (
+	MetricsUpdatesCounter prometheus.Counter
+	MetricsCleanGauge     prometheus.Gauge
+	MetricsCleanCounter   prometheus.Counter
+)
+
 type clock interface {
 	Now() time.Time
 	After(d time.Duration) <-chan time.Time
@@ -36,31 +48,34 @@ type gaugeVector interface {
 }
 
 type gaugeCleaner struct {
-	updates map[string]metricsUpdateDescriptor
-	metrics map[string]gaugeVector
-	input   chan metricsDescriptor
-	clk     clock
-	timeout time.Duration
-	lock    sync.Mutex
+	updates       map[string]metricsUpdateDescriptor
+	metrics       map[string]gaugeVector
+	input         chan metricsDescriptor
+	clk           clock
+	timeout       time.Duration
+	lock          sync.Mutex
+	metricsPrefix string
 }
 
-func NewGaugeCleaner() *gaugeCleaner {
+func NewGaugeCleaner(metricsPrefix string) *gaugeCleaner {
 	return &gaugeCleaner{
-		updates: make(map[string]metricsUpdateDescriptor),
-		metrics: make(map[string]gaugeVector),
-		input:   make(chan metricsDescriptor, 10),
-		clk:     &realClock{},
-		timeout: 0,
+		updates:       make(map[string]metricsUpdateDescriptor),
+		metrics:       make(map[string]gaugeVector),
+		input:         make(chan metricsDescriptor, 10),
+		clk:           &realClock{},
+		timeout:       0,
+		metricsPrefix: metricsPrefix,
 	}
 }
 
-func NewGaugeCleanerWithTimeout(timeout time.Duration) *gaugeCleaner {
+func NewGaugeCleanerWithTimeout(timeout time.Duration, metricsPrefix string) *gaugeCleaner {
 	return &gaugeCleaner{
-		updates: make(map[string]metricsUpdateDescriptor),
-		metrics: make(map[string]gaugeVector),
-		input:   make(chan metricsDescriptor, 10),
-		clk:     &realClock{},
-		timeout: timeout,
+		updates:       make(map[string]metricsUpdateDescriptor),
+		metrics:       make(map[string]gaugeVector),
+		input:         make(chan metricsDescriptor, 10),
+		clk:           &realClock{},
+		timeout:       timeout,
+		metricsPrefix: metricsPrefix,
 	}
 }
 
@@ -75,6 +90,7 @@ func (gc *gaugeCleaner) RegisterGauge(key string, vector gaugeVector) {
 }
 
 func (gc *gaugeCleaner) Run() {
+	gc.prepareMetrics()
 	if gc.timeout == 0 {
 		logger.Warn("gauge_cleaner", "Timeout is set to 0; disabling cleaner;")
 		return
@@ -83,12 +99,38 @@ func (gc *gaugeCleaner) Run() {
 	go gc.cleaner()
 }
 
+func (gc *gaugeCleaner) prepareMetrics() {
+	MetricsUpdatesCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: gc.metricsPrefix + "_" + MetricsUpdatesCount,
+			Help: "Count of registered metrics update",
+		})
+	MetricsCleanGauge = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: gc.metricsPrefix + "_" + MetricsCleanTime,
+			Help: "Metrics clean time in seconds - lock time only",
+		})
+	MetricsCleanCounter = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: gc.metricsPrefix + "_" + MetricsCleanCount,
+			Help: "Removed metrics count",
+		})
+
+	err := prometheus.Register(MetricsCleanCounter)
+	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsCleanCount, err)
+	err = prometheus.Register(MetricsUpdatesCounter)
+	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsUpdatesCount, err)
+	err = prometheus.Register(MetricsCleanGauge)
+	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsCleanTime, err)
+}
+
 func (gc *gaugeCleaner) updateMetric(key string, labels map[string]string) {
-	if gc.timeout == 0{
+	if gc.timeout == 0 {
 		//this is important due to channel receiver being disabled
 		logger.Debug("gauge_cleaner", "Skipped update due to 0 timeout for %s, %+v", key, labels)
 		return
 	}
+	MetricsUpdatesCounter.Inc()
 	gc.input <- metricsDescriptor{key: key, labels: labels}
 }
 
@@ -139,10 +181,12 @@ func (gc *gaugeCleaner) clean() {
 			logger.Info("gauge_cleaner", "Cleaning %s metrics for %+v", descriptor.metricsDescriptor.key, descriptor.metricsDescriptor.labels)
 			gc.metrics[descriptor.metricsDescriptor.key].Delete(descriptor.metricsDescriptor.labels)
 			delete(gc.updates, key)
+			MetricsCleanCounter.Inc()
 		}
 	}
 	gc.lock.Unlock()
 	end := time.Now()
+	MetricsCleanGauge.Set(end.Sub(start).Seconds())
 	logger.Debug("gauge_cleaner", "Cleaning completed after %s", end.Sub(start))
 }
 

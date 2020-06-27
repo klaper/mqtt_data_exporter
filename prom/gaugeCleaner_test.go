@@ -18,8 +18,8 @@ type testClock struct {
 
 func (tc testClock) Now() time.Time                      { return tc.current }
 func (testClock) After(d time.Duration) <-chan time.Time { return time.After(d) }
-func (tc *testClock) MoveForward(duration time.Duration)  { tc.current = tc.current.Add(duration) }
-func (tc *testClock) Reset()                              { tc.current = startDate }
+func (tc *testClock) MoveForward(duration time.Duration) { tc.current = tc.current.Add(duration) }
+func (tc *testClock) Reset()                             { tc.current = startDate }
 
 type testGaugeVec struct {
 	deleted bool
@@ -76,7 +76,7 @@ func Test_gaugeCleaner_receive(t *testing.T) {
 	hash := calculateHash(inputKey, inputLabels)
 	input := metricsDescriptor{key: inputKey, labels: inputLabels}
 
-	cleaner := NewGaugeCleaner()
+	cleaner := NewGaugeCleaner("")
 	cleaner.clk = &testClock{current: startDate}
 
 	cleaner.input <- input
@@ -99,7 +99,7 @@ func Test_gaugeCleaner_receive_loop(t *testing.T) {
 	//given
 	input := metricsDescriptor{key: inputKey, labels: inputLabels}
 
-	cleaner := NewGaugeCleaner()
+	cleaner := NewGaugeCleaner("")
 	cleaner.clk = &testClock{current: startDate}
 
 	cleaner.input <- input
@@ -118,7 +118,7 @@ func Test_gaugeCleaner_receive_loop(t *testing.T) {
 func Test_gaugeCleaner_RegisterGauge(t *testing.T) {
 	//given
 	gauge := &testGaugeVec{}
-	cleaner := NewGaugeCleaner()
+	cleaner := NewGaugeCleaner("")
 	defer cleaner.Close()
 	cleaner.clk = &testClock{current: startDate}
 
@@ -136,8 +136,8 @@ func Test_gaugeCleaner_RegisterGauge(t *testing.T) {
 func Test_gaugeCleaner_clean(t *testing.T) {
 	//given
 	gauge := &testGaugeVec{deleted: false}
-	hash:= calculateHash(inputKey, inputLabels)
-	cleaner := NewGaugeCleanerWithTimeout(1)
+	hash := calculateHash(inputKey, inputLabels)
+	cleaner := NewGaugeCleanerWithTimeout(1, "")
 	defer cleaner.Close()
 	clock := &testClock{current: startDate}
 	cleaner.clk = clock
@@ -149,7 +149,7 @@ func Test_gaugeCleaner_clean(t *testing.T) {
 	}
 
 	//when
-	clock.MoveForward( cleaner.timeout + (2 * time.Second))
+	clock.MoveForward(cleaner.timeout + (2 * time.Second))
 	//and
 	cleaner.clean()
 
@@ -157,7 +157,7 @@ func Test_gaugeCleaner_clean(t *testing.T) {
 	if !gauge.deleted {
 		t.Error("clean(): gauge should be deleted")
 	}
-	if _,ok := cleaner.updates[hash]; ok {
+	if _, ok := cleaner.updates[hash]; ok {
 		t.Error("clean(): updates should be deleted")
 	}
 }
@@ -165,7 +165,7 @@ func Test_gaugeCleaner_clean(t *testing.T) {
 func Test_gaugeCleaner_clean_shouldNotDeleteWithZeroTimeout(t *testing.T) {
 	//given
 	gauge := &testGaugeVec{deleted: false}
-	cleaner := NewGaugeCleaner()
+	cleaner := NewGaugeCleaner("")
 	defer cleaner.Close()
 	clock := &testClock{current: startDate}
 	cleaner.clk = clock
@@ -177,7 +177,7 @@ func Test_gaugeCleaner_clean_shouldNotDeleteWithZeroTimeout(t *testing.T) {
 	}
 
 	//when
-	clock.MoveForward( cleaner.timeout + (2 * time.Second))
+	clock.MoveForward(cleaner.timeout + (2 * time.Second))
 	//and
 	cleaner.clean()
 
