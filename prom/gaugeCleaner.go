@@ -11,15 +11,17 @@ import (
 )
 
 const (
-	MetricsUpdatesCount = "cleaner_update_count"
-	MetricsCleanTime    = "cleaner_clean_time"
-	MetricsCleanCount   = "cleaner_clean_count"
+	MetricsUpdatesCount = "cleaner_updates_received"
+	MetricsCleanTime    = "cleaner_clean_lock_duration"
+	MetricsCleanCount   = "cleaner_clean_executions"
+	MetricsRemovedCount = "cleaner_metrics_removed"
 )
 
 var (
-	MetricsUpdatesCounter prometheus.Counter
-	MetricsCleanGauge     prometheus.Gauge
-	MetricsCleanCounter   prometheus.Counter
+	MetricsUpdatesCounter   prometheus.Counter
+	MetricsLockTimeCounter  prometheus.Counter
+	MetricsExecutionCounter prometheus.Counter
+	MetricsRemovedCounter   prometheus.Counter
 )
 
 type clock interface {
@@ -105,23 +107,30 @@ func (gc *gaugeCleaner) prepareMetrics() {
 			Name: gc.metricsPrefix + "_" + MetricsUpdatesCount,
 			Help: "Count of registered metrics update",
 		})
-	MetricsCleanGauge = prometheus.NewGauge(
-		prometheus.GaugeOpts{
+	MetricsLockTimeCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
 			Name: gc.metricsPrefix + "_" + MetricsCleanTime,
-			Help: "Metrics clean time in seconds - lock time only",
+			Help: "Cumulative metrics clean time in seconds - lock time only",
 		})
-	MetricsCleanCounter = prometheus.NewGauge(
-		prometheus.GaugeOpts{
+	MetricsExecutionCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
 			Name: gc.metricsPrefix + "_" + MetricsCleanCount,
+			Help: "Number of clean process executions",
+		})
+	MetricsRemovedCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: gc.metricsPrefix + "_" + MetricsRemovedCount,
 			Help: "Removed metrics count",
 		})
 
-	err := prometheus.Register(MetricsCleanCounter)
+	err := prometheus.Register(MetricsExecutionCounter)
 	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsCleanCount, err)
 	err = prometheus.Register(MetricsUpdatesCounter)
 	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsUpdatesCount, err)
-	err = prometheus.Register(MetricsCleanGauge)
+	err = prometheus.Register(MetricsLockTimeCounter)
 	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsCleanTime, err)
+	err = prometheus.Register(MetricsRemovedCounter)
+	logger.Debug("gauge_cleaner", "%s register error: %v", MetricsRemovedCount, err)
 }
 
 func (gc *gaugeCleaner) updateMetric(key string, labels map[string]string) {
@@ -181,12 +190,13 @@ func (gc *gaugeCleaner) clean() {
 			logger.Info("gauge_cleaner", "Cleaning %s metrics for %+v", descriptor.metricsDescriptor.key, descriptor.metricsDescriptor.labels)
 			gc.metrics[descriptor.metricsDescriptor.key].Delete(descriptor.metricsDescriptor.labels)
 			delete(gc.updates, key)
-			MetricsCleanCounter.Inc()
+			MetricsRemovedCounter.Inc()
 		}
 	}
 	gc.lock.Unlock()
 	end := time.Now()
-	MetricsCleanGauge.Set(end.Sub(start).Seconds())
+	MetricsExecutionCounter.Inc()
+	MetricsLockTimeCounter.Add(end.Sub(start).Seconds())
 	logger.Debug("gauge_cleaner", "Cleaning completed after %s", end.Sub(start))
 }
 
